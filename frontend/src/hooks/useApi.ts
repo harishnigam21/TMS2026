@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
 import { setLoginStatus } from "@/redux/slices/UserSlice";
+import { AppDispatch } from "@/redux/Store";
 
 type ApiResponse<T> = {
   success: boolean;
@@ -20,7 +21,7 @@ const useApi = <T = unknown>() => {
   const [status, setStatus] = useState<number | null>(null);
 
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   const handleGlobalStatus = useCallback(
     (statusCode: number) => {
