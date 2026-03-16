@@ -20,7 +20,7 @@ export default function TaskCard({ task }: taskCardProps) {
       toast.error("Invalid Task");
       return;
     }
-    await deleteTaskRequest(`tasks/${id}`, "DELETE").then((result) => {
+    deleteTaskRequest(`tasks/${id}`, "DELETE").then((result) => {
       const data = result?.data as Data<number> | undefined;
       if (result && result.success) {
         toast.success(data?.message || "Task Deleted");
@@ -38,7 +38,7 @@ export default function TaskCard({ task }: taskCardProps) {
       toast.error("Invalid Task");
       return;
     }
-    await updateTaskRequest(`tasks/${id}/toggle`, "PATCH").then((result) => {
+    updateTaskRequest(`tasks/${id}/toggle`, "PATCH").then((result) => {
       const data = result?.data as Data<Task> | undefined;
       if (result && result.success) {
         toast.success(

@@ -28,6 +28,8 @@ export default function Login() {
     ).then((result) => {
       const data = result?.data as Data<User> | undefined;
       if (result && result.success) {
+        setEmail("");
+        setPassword("");
         toast.success(data?.message || "Successfully Authorized");
         if (data?.acTk) {
           window.localStorage.setItem("acTk", JSON.stringify(data.acTk));

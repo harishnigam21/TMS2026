@@ -12,7 +12,6 @@ import toast from "react-hot-toast";
 import TaskCard from "./Task";
 export default function Dashboard() {
   const tasks = useSelector((state: RootState) => state.task.tasks);
-  console.log(tasks);
   const [title, setTitle] = useState("");
   const dispatch = useDispatch<AppDispatch>();
   const { sendRequest: getTaskRequest, loading: getTaskLoading } = useApi();
@@ -41,7 +40,7 @@ export default function Dashboard() {
       toast.error("Invalid Task Title");
       return;
     }
-    await createTaskRequest("tasks", "POST", { title }).then((result) => {
+    createTaskRequest("tasks", "POST", { title }).then((result) => {
       const data = result?.data as Data<Task> | undefined;
       if (result && result.success) {
         toast.success(data?.message || "Created new Task");
@@ -68,6 +67,11 @@ export default function Dashboard() {
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key == "Enter" && !createTaskLoading) {
+              createTask();
+            }
+          }}
           placeholder="Add new task..."
           className="border p-2 rounded w-full"
         />
@@ -83,9 +87,11 @@ export default function Dashboard() {
 
       {/* Task List */}
       <div className="space-y-3">
-        {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
+        {tasks.length > 0 ? (
+          tasks.map((task) => <TaskCard key={task.id} task={task} />)
+        ) : (
+          <strong className=" text-red-700">No Task Found !</strong>
+        )}
       </div>
     </section>
   );
