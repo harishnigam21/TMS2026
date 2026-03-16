@@ -40,7 +40,13 @@ export const login = async (req: Request, res: Response) => {
     if (!valid) return res.status(401).json({ message: "Invalid password" });
 
     const token = jwt.sign({ id: user.id }, "SECRET_KEY");
-    return res.status(200).json({ message: "Successfully verified", token });
+    return res
+      .status(200)
+      .json({
+        message: "Successfully verified",
+        acTk: token,
+        data: { id: user.id, name: user.name, email: user.email },
+      });
   } catch (error) {
     console.error("Error from login controller", error);
     return res.status(500).json({ message: "Internal Server Error" });
