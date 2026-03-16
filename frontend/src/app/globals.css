@@ -3,6 +3,19 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --color-primary: #6366f1;
+  --color-secondary: #06b6d4;
+  --color-tertiary: #f59e0b;
+}
+
+@layer components {
+  .spinner {
+    @apply w-5 h-5 rounded-full border-4 animate-[spin_0.3s_linear_infinite];
+    border-left-color: var(--color-primary);
+    border-right-color: var(--color-secondary);
+    border-bottom-color: var(--color-tertiary);
+    border-top-color: transparent;
+  }
 }
 
 @theme inline {
