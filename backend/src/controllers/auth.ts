@@ -18,7 +18,7 @@ export const register = async (req: Request, res: Response) => {
     return res.status(201).json({ message: "Successfully Registered" });
   } catch (error) {
     console.error("Error from register controller", error);
-    const prismaError = handlePrismaError(error);
+    const prismaError = handlePrismaError(error, "User");
     if (prismaError) {
       return res.status(prismaError.status).json({
         message: prismaError.message,
