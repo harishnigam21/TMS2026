@@ -16,9 +16,10 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         userId: req.userId!,
       },
     });
-    return res
-      .status(201)
-      .json({ message: "Successfully Created Task", data: task });
+    return res.status(201).json({
+      message: "Successfully Created Task",
+      data: { id: task.id, title: task.title, completed: task.completed },
+    });
   } catch (error) {
     console.error("Error from createTask controller", error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -64,7 +65,10 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
     });
     return res
       .status(200)
-      .json({ message: "Successfully updated Task", data: updatedTask });
+      .json({
+        message: `${updatedTask.completed ? "Task Completed" : "Task not completed"}`,
+        data: updatedTask,
+      });
   } catch (error) {
     console.error("Error from updateTask controller", error);
     const prismaError = handlePrismaError(error, "Task");
@@ -80,10 +84,10 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
 export const deleteTask = async (req: AuthRequest, res: Response) => {
   const id = Number(req.params.id);
   try {
-    await prisma.task.delete({
+    const task = await prisma.task.delete({
       where: { id, userId: req.userId },
     });
-    res.status(200).json({ message: "Task deleted" });
+    res.status(200).json({ message: "Task deleted", data: task.id });
   } catch (error) {
     console.error("Error from deleteTask controller", error);
     const prismaError = handlePrismaError(error, "Task");
