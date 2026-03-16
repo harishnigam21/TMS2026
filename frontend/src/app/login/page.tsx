@@ -34,8 +34,8 @@ export default function Login() {
         }
 
         if (data?.data) {
-          dispatch(setUser({ data: data.data }));
-          dispatch(setLoginStatus({ data: true }));
+          dispatch(setUser(data.data));
+          dispatch(setLoginStatus(true));
           window.localStorage.setItem("userInfo", JSON.stringify(data.data));
         }
         setTimeout(() => {
