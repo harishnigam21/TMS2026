@@ -107,7 +107,7 @@ export default function Dashboard() {
         toast.success(data?.message || "Created new Task");
         const params = new URLSearchParams(searchParams.toString());
         params.set("page", "1");
-        router.push(`${pathname}?${params.toString()}`);
+        router.replace(`${pathname}?${params.toString()}`);
         setTitle("");
       } else {
         toast.error(data?.message || "Failed to create task");
