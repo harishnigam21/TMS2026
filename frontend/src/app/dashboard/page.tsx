@@ -16,6 +16,7 @@ import { FaCaretLeft, FaCaretRight } from "react-icons/fa6";
 import { useSearchParams, useRouter } from "next/navigation";
 import { IoMdAdd } from "react-icons/io";
 import { FaSearch } from "react-icons/fa";
+import { IoMdLogOut } from "react-icons/io";
 
 export default function Dashboard() {
   const tasks = useSelector((state: RootState) => state.task.tasks);
@@ -32,6 +33,7 @@ export default function Dashboard() {
     useApi();
   const { sendRequest: deleteTaskRequest, loading: deleteTaskLoading } =
     useApi();
+  const { sendRequest: logoutRequest, loading: logoutLoading } = useApi();
   const filterParams = searchParams.get("filter");
 
   const handleFilterChange = (value: string | null) => {
@@ -74,7 +76,6 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadTasks() {
       const params = searchParams.toString();
-
       await getTaskRequest(`tasks?${params}`, "GET").then((result) => {
         const data = result?.data as Data<Task[]> | undefined;
 
@@ -169,9 +170,28 @@ export default function Dashboard() {
     return pages;
   }, [totalPages]);
 
+  const handleLogout = async () => {
+    logoutRequest("auth/logout", "PATCH").then((result) => {
+      if (result && result.success) {
+        window.localStorage.clear();
+        router.push("login");
+      }
+    });
+  };
   return (
     <section className="max-w-4xl mx-auto p-8">
       <h1 className="text-3xl font-bold mb-6 text-center">Task Dashboard</h1>
+      <div className="absolute top-2 right-2 cursor-pointer">
+        {logoutLoading ? (
+          <div className="spinner"></div>
+        ) : (
+          <IoMdLogOut
+            title="logout"
+            className=" text-4xl text-blue-600 "
+            onClick={handleLogout}
+          />
+        )}
+      </div>
 
       {/* Add and Search Task */}
       <div className="flex flex-wrap min-[480]:flex-nowrap justify-between gap-4">
@@ -229,37 +249,36 @@ export default function Dashboard() {
         </div>
       </div>
       {/* filter buttons */}
-      {tasks.length > 0 && (
-        <div className="flex flex-wrap gap-4 items-center mb-8 mt-4">
-          <button
-            className={`py-0.5 px-1 text-sm rounded-full hover:scale-105 transition-all ${filter == "complete" ? "bg-green-500 text-black font-bold" : "bg-gray-500 text-black font-bold"} cursor-pointer`}
-            onClick={() => {
-              setFilter("complete");
-              handleFilterChange("true");
-            }}
-          >
-            Complete
-          </button>
-          <button
-            className={`py-0.5 px-1 text-sm rounded-full hover:scale-105 transition-all ${filter == "incomplete" ? "bg-green-500 text-black font-bold" : "bg-gray-500 text-black font-bold"} cursor-pointer`}
-            onClick={() => {
-              setFilter("incomplete");
-              handleFilterChange("false");
-            }}
-          >
-            InComplete
-          </button>
-          <p
-            className="text-red-500 cursor-pointer"
-            onClick={() => {
-              setFilter(null);
-              handleFilterChange(null);
-            }}
-          >
-            clear
-          </p>
-        </div>
-      )}
+
+      <div className="flex flex-wrap gap-4 items-center mb-8 mt-4">
+        <button
+          className={`py-1 px-3 text-sm rounded-full hover:scale-105 transition-all ${filter == "complete" ? "bg-green-500 text-black font-bold" : "bg-gray-500 text-black font-bold"} cursor-pointer`}
+          onClick={() => {
+            setFilter("complete");
+            handleFilterChange("true");
+          }}
+        >
+          Complete
+        </button>
+        <button
+          className={`py-1 px-3 text-sm rounded-full hover:scale-105 transition-all ${filter == "incomplete" ? "bg-green-500 text-black font-bold" : "bg-gray-500 text-black font-bold"} cursor-pointer`}
+          onClick={() => {
+            setFilter("incomplete");
+            handleFilterChange("false");
+          }}
+        >
+          InComplete
+        </button>
+        <p
+          className="text-red-500 cursor-pointer"
+          onClick={() => {
+            setFilter(null);
+            handleFilterChange(null);
+          }}
+        >
+          clear
+        </p>
+      </div>
 
       {/* Task List */}
       <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 gap-4">

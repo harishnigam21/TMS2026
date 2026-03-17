@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
-import { setLoginStatus } from "@/redux/slices/UserSlice";
+import { setLoginStatus, setUser } from "@/redux/slices/UserSlice";
 import { AppDispatch } from "@/redux/Store";
 
 type ApiResponse<T> = {
@@ -25,16 +25,10 @@ const useApi = <T = unknown>() => {
 
   const handleGlobalStatus = useCallback(
     (statusCode: number) => {
-      switch (statusCode) {
-        case 401:
-        case 403:
-          localStorage.removeItem("acTk");
-          dispatch(setLoginStatus(false));
-          router.replace("/login");
-          break;
-
-        default:
-          break;
+      if (statusCode === 403) {
+        localStorage.removeItem("acTk");
+        dispatch(setLoginStatus(false));
+        router.replace("/login");
       }
     },
     [router, dispatch],
@@ -47,6 +41,7 @@ const useApi = <T = unknown>() => {
       body: unknown = null,
       customHeaders: Record<string, string> = {},
       redirect: boolean = true,
+      retry: boolean = true, // prevent infinite loop
     ): Promise<ApiResponse<T>> => {
       setLoading(true);
       setError(null);
@@ -54,19 +49,19 @@ const useApi = <T = unknown>() => {
 
       const updateUrl = `${process.env.NEXT_PUBLIC_BACKEND_HOST}/${url}`;
 
-      const headers: Record<string, string> = {
-        Authorization: localStorage.getItem("acTk")
-          ? `Bearer ${JSON.parse(localStorage.getItem("acTk") as string)}`
-          : "",
-        ...customHeaders,
-      };
+      const makeRequest = async () => {
+        const headers: Record<string, string> = {
+          Authorization: localStorage.getItem("acTk")
+            ? `Bearer ${localStorage.getItem("acTk")}`
+            : "",
+          ...customHeaders,
+        };
 
-      if (!(body instanceof FormData)) {
-        headers["Content-Type"] = "application/json";
-      }
+        if (!(body instanceof FormData)) {
+          headers["Content-Type"] = "application/json";
+        }
 
-      try {
-        const response = await fetch(updateUrl, {
+        return fetch(updateUrl, {
           method,
           headers,
           credentials: "include",
@@ -77,8 +72,49 @@ const useApi = <T = unknown>() => {
                 ? JSON.stringify(body)
                 : null,
         });
+      };
 
+      try {
+        const response = await makeRequest();
         setStatus(response.status);
+
+        if (response.status === 401 && retry) {
+          try {
+            const refreshRes = await fetch(
+              `${process.env.NEXT_PUBLIC_BACKEND_HOST}/auth/refresh`,
+              {
+                method: "PATCH",
+                credentials: "include",
+              },
+            );
+
+            if (!refreshRes.ok) throw new Error("Refresh failed");
+
+            const refreshData = await refreshRes.json();
+            localStorage.setItem("acTk", refreshData.acTk);
+            dispatch(setUser(refreshData.data));
+            dispatch(setLoginStatus(true));
+            return await sendRequest(
+              url,
+              method,
+              body,
+              customHeaders,
+              redirect,
+              false,
+            );
+          } catch (err) {
+            localStorage.removeItem("acTk");
+            dispatch(setLoginStatus(false));
+            router.replace("/login");
+
+            return {
+              success: false,
+              data: null,
+              status: 403,
+              error: "Session expired",
+            };
+          }
+        }
 
         if (redirect) handleGlobalStatus(response.status);
 
@@ -127,7 +163,7 @@ const useApi = <T = unknown>() => {
         setLoading(false);
       }
     },
-    [handleGlobalStatus],
+    [handleGlobalStatus, dispatch, router],
   );
 
   return { data, loading, error, status, sendRequest };
