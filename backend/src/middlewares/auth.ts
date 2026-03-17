@@ -19,7 +19,10 @@ export const authenticate = (
   }
 
   try {
-    const decoded = jwt.verify(token, "SECRET_KEY") as { id: number };
+    const decoded = jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_KEY as string,
+    ) as { id: number };
 
     req.userId = decoded.id;
 
