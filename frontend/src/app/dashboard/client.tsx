@@ -1,8 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import useApi from "@/hooks/useApi";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/Store";
@@ -13,7 +11,7 @@ import { Task } from "@/types/task";
 import toast from "react-hot-toast";
 import TaskCard from "./Task";
 import { FaCaretLeft, FaCaretRight } from "react-icons/fa6";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { IoMdAdd } from "react-icons/io";
 import { IoMdLogOut } from "react-icons/io";
 import { IoHome } from "react-icons/io5";
@@ -22,12 +20,13 @@ import { CiSearch } from "react-icons/ci";
 export default function Dashboard() {
   const tasks = useSelector((state: RootState) => state.task.tasks);
   const pagination = useSelector((state: RootState) => state.task.pagination);
-  const pathname = usePathname();
+
   const [title, setTitle] = useState("");
   const [filter, setFilter] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const searchString = searchParams.toString();
 
   const { sendRequest: getTaskRequest, loading: getTaskLoading } = useApi();
   const { sendRequest: createTaskRequest, loading: createTaskLoading } =
@@ -35,10 +34,9 @@ export default function Dashboard() {
   const { sendRequest: deleteTaskRequest, loading: deleteTaskLoading } =
     useApi();
   const { sendRequest: logoutRequest, loading: logoutLoading } = useApi();
-  const filterParams = searchParams.get("filter");
 
   const handleFilterChange = (value: string | null) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchString);
     if (!value) {
       params.delete("filter");
     } else {
@@ -48,35 +46,35 @@ export default function Dashboard() {
     router.push(`?${params.toString()}`);
   };
   const search = searchParams.get("search") || "";
-  const [firstRender, setFirstRender] = useState(false);
-  const [toggle, setToggle] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState(search);
-  const handleSearch = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+  const handleSearch = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-    if (value) {
-      params.set("search", value);
-    } else {
-      params.delete("search");
-    }
+      if (value) {
+        params.set("search", value);
+      } else {
+        params.delete("search");
+      }
 
-    params.set("page", "1"); //  reset page
+      params.set("page", "1"); //  reset page
 
-    router.push(`?${params.toString()}`);
-  };
+      router.push(`?${params.toString()}`);
+    },
+    [router, searchParams],
+  );
   //Debouncing logic to make some delay on every strike so that in ms request can be avoided
   useEffect(() => {
+    const currentSearch = searchParams.get("search") || "";
+    if (searchInput === currentSearch) return;
     const delay = setTimeout(() => {
-      if (firstRender) {
-        handleSearch(searchInput);
-      }
+      handleSearch(searchInput);
     }, 500);
-
     return () => clearTimeout(delay);
-  }, [searchInput]);
+  }, [searchInput, handleSearch, searchParams]);
   useEffect(() => {
     async function loadTasks() {
-      const params = searchParams.toString();
+      const params = searchString;
       await getTaskRequest(`tasks?${params}`, "GET").then((result) => {
         const data = result?.data as Data<Task[]> | undefined;
 
@@ -92,8 +90,7 @@ export default function Dashboard() {
       });
     }
     loadTasks();
-    setFirstRender(true);
-  }, [searchParams, dispatch, getTaskRequest]);
+  }, [searchParams, dispatch, getTaskRequest, searchString]);
 
   const createTask = async () => {
     setSearchInput("");
@@ -105,9 +102,9 @@ export default function Dashboard() {
       const data = result?.data as Data<Task> | undefined;
       if (result && result.success) {
         toast.success(data?.message || "Created new Task");
-        const params = new URLSearchParams(searchParams.toString());
+        const params = new URLSearchParams(searchString);
         params.set("page", "1");
-        router.replace(`${pathname}?${params.toString()}`);
+        router.push(`?${params.toString()}`);
         setTitle("");
       } else {
         toast.error(data?.message || "Failed to create task");
@@ -125,7 +122,7 @@ export default function Dashboard() {
         toast.success(data?.message || "Task Deleted");
         const currentPage = Number(searchParams.get("page") || 1);
         if (tasks.length === 1 && currentPage > 1) {
-          const params = new URLSearchParams(searchParams.toString());
+          const params = new URLSearchParams(searchString);
           params.set("page", (currentPage - 1).toString());
           router.push(`?${params.toString()}`);
         } else {
@@ -143,7 +140,7 @@ export default function Dashboard() {
   };
   // pagination logic
   const changePage = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchString);
 
     params.set("page", page.toString());
 
@@ -209,7 +206,6 @@ export default function Dashboard() {
               className=" text-white cursor-pointer w-10 h-10 rounded-full flex items-center justify-center gap-2"
               onClick={() => {
                 if (search.length == 0) {
-                  setToggle("search");
                 } else {
                   handleSearch(searchInput);
                 }
@@ -219,7 +215,7 @@ export default function Dashboard() {
             </button>
             <input
               type="search"
-              value={search}
+              value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search Here..."
               className="border p-2 rounded w-full"
@@ -242,7 +238,6 @@ export default function Dashboard() {
               className="bg-green-600 text-white cursor-pointer min-w-10 h-10 rounded-full flex items-center justify-center gap-2"
               onClick={() => {
                 if (title.length == 0) {
-                  setToggle("create");
                 } else {
                   createTask();
                 }
