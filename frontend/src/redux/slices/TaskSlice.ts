@@ -23,13 +23,16 @@ const TaskSlice = createSlice({
       state.tasks.unshift(action.payload);
     },
     updateTask: (state, action: PayloadAction<Task>) => {
-      state.tasks = state.tasks.map((item) => {
-        if (item.id == action.payload.id) {
-          return { ...item, completed: action.payload.completed };
-        } else {
-          return item;
-        }
-      });
+      const index = state.tasks.findIndex(
+        (item) => item.id === action.payload.id,
+      );
+
+      if (index !== -1) {
+        state.tasks[index] = {
+          ...state.tasks[index],
+          completed: action.payload.completed,
+        };
+      }
     },
     deleteTask: (state, action: PayloadAction<number>) => {
       state.tasks = state.tasks.filter((item) => item.id != action.payload);
