@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import useApi from "@/hooks/useApi";
 import toast from "react-hot-toast";
 import { Data } from "@/types/data";
+import { IoHome } from "react-icons/io5";
 
 export default function Register() {
   const { sendRequest, loading } = useApi();
@@ -24,7 +25,7 @@ export default function Register() {
     ).then((result) => {
       const data = result?.data as Data<string> | undefined;
       if (result && result.success) {
-        toast.success(data?.message || 'You have been registered Successfully')
+        toast.success(data?.message || "You have been registered Successfully");
         setEmail("");
         setPassword("");
         setName("");
@@ -46,14 +47,16 @@ export default function Register() {
       }
     });
   };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500">
-      <div className="w-95 p-8 rounded-2xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-xl">
+    <div className="min-h-screen bg-linear-to-br from-black via-gray-900 to-black text-white flex justify-center-safe items-center-safe">
+      <IoHome
+        className="text-4xl text-amber-900 cursor-pointer absolute top-2 left-2"
+        onClick={() => router.push("/")}
+      />
+      <div className="w-95 p-8 rounded-2xl backdrop-blur-sm border border-white/20 shadow-xl">
         <h1 className="text-3xl font-semibold text-white text-center mb-6">
           Welcome !
         </h1>
-
         <div className="flex flex-col gap-4">
           <input
             placeholder="Name"
@@ -61,7 +64,7 @@ export default function Register() {
               setName(e.target.value);
               setErrors((prev) => ({ ...prev, name: "" }));
             }}
-            className="px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40"
+            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40"
           />
           {errors["name"] && (
             <small className="text-red-500">{errors["name"]} !</small>
@@ -72,7 +75,7 @@ export default function Register() {
               setEmail(e.target.value);
               setErrors((prev) => ({ ...prev, email: "" }));
             }}
-            className="px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40"
+            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40"
           />
           {errors["email"] && (
             <small className="text-red-500">{errors["email"]} !</small>
@@ -84,7 +87,7 @@ export default function Register() {
               setPassword(e.target.value);
               setErrors((prev) => ({ ...prev, password: "" }));
             }}
-            className="px-4 py-3 rounded-lg bg-white/20 text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40"
+            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40"
           />
           {errors["password"] && (
             <small className="text-red-500">{errors["password"]} !</small>
