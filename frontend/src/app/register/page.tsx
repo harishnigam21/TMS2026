@@ -24,6 +24,7 @@ export default function Register() {
     ).then((result) => {
       const data = result?.data as Data<string> | undefined;
       if (result && result.success) {
+        toast.success(data?.message || 'You have been registered Successfully')
         setEmail("");
         setPassword("");
         setName("");

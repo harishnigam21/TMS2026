@@ -50,7 +50,7 @@ export default function Login() {
         const errorMessage =
           result?.error || data?.message || "An error occurred";
         toast.error(errorMessage);
-        if (result.status === 403 || result.status === 404) {
+        if (result.status === 400 || result.status === 404) {
           setTimeout(() => {
             router.push("/register");
           }, 2000);

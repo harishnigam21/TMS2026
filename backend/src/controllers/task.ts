@@ -4,7 +4,7 @@ import { AuthRequest } from "../middlewares/auth";
 import { handlePrismaError } from "../utils/prismaErrorHandler";
 
 export const createTask = async (req: AuthRequest, res: Response) => {
-  const { title } = req.body;
+  const { title } = req.body || {};
   try {
     const checkTitle = title?.trim();
     if (!checkTitle || checkTitle.length < 2) {
@@ -16,6 +16,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         createdAt: date.toISOString(),
         title: checkTitle,
         userId: req.userId!,
+        notes: [],
       },
     });
     return res.status(201).json({
@@ -26,6 +27,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         completed: task.completed,
         description: task.description,
         createdAt: task.createdAt,
+        notes: task.notes,
       },
     });
   } catch (error) {
@@ -153,6 +155,46 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
     res.status(200).json({ message: "Task deleted", data: task.id });
   } catch (error) {
     console.error("Error from deleteTask controller", error);
+    const prismaError = handlePrismaError(error, "Task");
+    if (prismaError) {
+      return res.status(prismaError.status).json({
+        message: prismaError.message,
+      });
+    }
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const addNote = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const { note } = req.body || {};
+    const cleanNote = note?.trim() || "";
+    if (!note || !cleanNote || cleanNote.length < 2) {
+      return res.status(400).json({ message: "Invalid Note" });
+    }
+    const updatedTask = await prisma.$transaction(async (tx) => {
+      const task = await tx.task.findUnique({
+        where: { id, userId: req.userId },
+      });
+      if (!task) {
+        throw new Error("Task not found");
+      }
+      const existingNotes = Array.isArray(task.notes) ? task.notes : [];
+      const updatedNotes = [...existingNotes, note];
+      return tx.task.update({
+        where: { id, userId: req.userId },
+        data: {
+          notes: updatedNotes,
+        },
+      });
+    });
+    return res.status(200).json({
+      message: "Note added Successfully",
+      data: { id: updatedTask.id, note },
+    });
+  } catch (error) {
+    console.error("Error from addNote controller", error);
     const prismaError = handlePrismaError(error, "Task");
     if (prismaError) {
       return res.status(prismaError.status).json({

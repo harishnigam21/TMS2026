@@ -40,8 +40,26 @@ const TaskSlice = createSlice({
     setPagination: (state, action: PayloadAction<Pagination>) => {
       state.pagination = action.payload;
     },
+    addNote: (state, action: PayloadAction<{ id: number; note: string }>) => {
+      const index = state.tasks.findIndex(
+        (item) => item.id === action.payload.id,
+      );
+
+      if (index !== -1) {
+        state.tasks[index] = {
+          ...state.tasks[index],
+          notes: [...state.tasks[index].notes, action.payload.note],
+        };
+      }
+    },
   },
 });
-export const { setTask, addTask, updateTask, deleteTask, setPagination } =
-  TaskSlice.actions;
+export const {
+  setTask,
+  addTask,
+  updateTask,
+  deleteTask,
+  setPagination,
+  addNote,
+} = TaskSlice.actions;
 export default TaskSlice.reducer;

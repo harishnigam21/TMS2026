@@ -187,11 +187,7 @@ export default function Dashboard() {
               }
             }}
           >
-            {createTaskLoading ? (
-              <span className="spinner"></span>
-            ) : (
-              <FaSearch className="text-3xl" />
-            )}
+            <FaSearch className="text-3xl" />
           </button>
           <input
             type="search"
@@ -232,36 +228,38 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
-
-      <div className="flex flex-wrap gap-4 items-center my-4">
-        <button
-          className={`py-0.5 px-1 text-sm rounded-full hover:scale-105 transition-all ${filter == "complete" ? "bg-green-500 text-black font-bold" : "bg-gray-500 text-black font-bold"} cursor-pointer`}
-          onClick={() => {
-            setFilter("complete");
-            handleFilterChange("true");
-          }}
-        >
-          Complete
-        </button>
-        <button
-          className={`py-0.5 px-1 text-sm rounded-full hover:scale-105 transition-all ${filter == "incomplete" ? "bg-green-500 text-black font-bold" : "bg-gray-500 text-black font-bold"} cursor-pointer`}
-          onClick={() => {
-            setFilter("incomplete");
-            handleFilterChange("false");
-          }}
-        >
-          InComplete
-        </button>
-        <p
-          className="text-red-500 cursor-pointer"
-          onClick={() => {
-            setFilter(null);
-            handleFilterChange(null);
-          }}
-        >
-          clear
-        </p>
-      </div>
+      {/* filter buttons */}
+      {tasks.length > 0 && (
+        <div className="flex flex-wrap gap-4 items-center mb-8 mt-4">
+          <button
+            className={`py-0.5 px-1 text-sm rounded-full hover:scale-105 transition-all ${filter == "complete" ? "bg-green-500 text-black font-bold" : "bg-gray-500 text-black font-bold"} cursor-pointer`}
+            onClick={() => {
+              setFilter("complete");
+              handleFilterChange("true");
+            }}
+          >
+            Complete
+          </button>
+          <button
+            className={`py-0.5 px-1 text-sm rounded-full hover:scale-105 transition-all ${filter == "incomplete" ? "bg-green-500 text-black font-bold" : "bg-gray-500 text-black font-bold"} cursor-pointer`}
+            onClick={() => {
+              setFilter("incomplete");
+              handleFilterChange("false");
+            }}
+          >
+            InComplete
+          </button>
+          <p
+            className="text-red-500 cursor-pointer"
+            onClick={() => {
+              setFilter(null);
+              handleFilterChange(null);
+            }}
+          >
+            clear
+          </p>
+        </div>
+      )}
 
       {/* Task List */}
       <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 gap-4">
@@ -277,7 +275,9 @@ export default function Dashboard() {
             />
           ))
         ) : (
-          <strong className="text-red-700">No Task Found!</strong>
+          <strong className="text-red-700 col-span-full text-center">
+            No Task Found!
+          </strong>
         )}
       </div>
 

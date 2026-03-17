@@ -3,5 +3,6 @@ export interface Task {
   title: string;
   completed: boolean;
   description: string;
+  notes: string[];
   createdAt: string;
 }
