@@ -23,8 +23,11 @@ model User {
 model Task {
   id        Int     @id @default(autoincrement())
   title     String
+  description     String @default("")
   completed Boolean @default(false)
+  createdAt String
   userId    Int
   user      User    @relation(fields: [userId], references: [id])
   @@unique([id, userId])
+  @@index([userId, createdAt, id])
 }

@@ -10,15 +10,23 @@ export const createTask = async (req: AuthRequest, res: Response) => {
     if (!checkTitle || checkTitle.length < 2) {
       return res.status(400).json({ message: "Invalid Title Name" });
     }
+    const date = new Date();
     const task = await prisma.task.create({
       data: {
+        createdAt: date.toISOString(),
         title: checkTitle,
         userId: req.userId!,
       },
     });
     return res.status(201).json({
       message: "Successfully Created Task",
-      data: { id: task.id, title: task.title, completed: task.completed },
+      data: {
+        id: task.id,
+        title: task.title,
+        completed: task.completed,
+        description: task.description,
+        createdAt: task.createdAt,
+      },
     });
   } catch (error) {
     console.error("Error from createTask controller", error);
@@ -26,23 +34,75 @@ export const createTask = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// export const getTasks = async (req: AuthRequest, res: Response) => {
+//   try {
+//     const tasks = await prisma.task.findMany({
+//       where: { userId: req.userId },
+//     });
+
+//     return res
+//       .status(200)
+//       .json({ message: "Successfully got all tasks", data: tasks });
+//   } catch (error) {
+//     console.error("Error from getTasks controller", error);
+//     const prismaError = handlePrismaError(error, "Task");
+//     if (prismaError) {
+//       return res.status(prismaError.status).json({
+//         message: prismaError.message,
+//       });
+//     }
+//     return res.status(500).json({ message: "Internal Server Error" });
+//   }
+// };
+
 export const getTasks = async (req: AuthRequest, res: Response) => {
   try {
-    const tasks = await prisma.task.findMany({
-      where: { userId: req.userId },
+    const limit = 9;
+    const page = req.query.page ? Number(req.query.page) : 1;
+    const filter = req.query.filter as string | undefined;
+
+    const filters: any = {
+      userId: req.userId,
+      ...(filter !== undefined && { completed: filter === "true" }),
+    };
+
+    const skip = (page - 1) * limit;
+
+    // total count
+    const totalItems = await prisma.task.count({
+      where: filters,
     });
 
-    return res
-      .status(200)
-      .json({ message: "Successfully got all tasks", data: tasks });
+    const totalPages = Math.ceil(totalItems / limit);
+
+    const tasks = await prisma.task.findMany({
+      take: limit,
+      skip: skip,
+      where: filters,
+      orderBy: { id: "desc" },
+    });
+
+    return res.status(200).json({
+      message: "Successfully got tasks",
+      data: tasks,
+      pagination: {
+        thisPage: page,
+        totalPages,
+        totalItems,
+        limit,
+        hasMore: page < totalPages,
+      },
+    });
   } catch (error) {
     console.error("Error from getTasks controller", error);
+
     const prismaError = handlePrismaError(error, "Task");
     if (prismaError) {
       return res.status(prismaError.status).json({
         message: prismaError.message,
       });
     }
+
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -63,12 +123,10 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
         },
       });
     });
-    return res
-      .status(200)
-      .json({
-        message: `${updatedTask.completed ? "Task Completed" : "Task not completed"}`,
-        data: updatedTask,
-      });
+    return res.status(200).json({
+      message: `${updatedTask.completed ? "Task Completed" : "Task not completed"}`,
+      data: updatedTask,
+    });
   } catch (error) {
     console.error("Error from updateTask controller", error);
     const prismaError = handlePrismaError(error, "Task");
