@@ -13,7 +13,7 @@ import { Task } from "@/types/task";
 import toast from "react-hot-toast";
 import TaskCard from "./Task";
 import { FaCaretLeft, FaCaretRight } from "react-icons/fa6";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { IoMdAdd } from "react-icons/io";
 import { IoMdLogOut } from "react-icons/io";
 import { IoHome } from "react-icons/io5";
@@ -22,7 +22,7 @@ import { CiSearch } from "react-icons/ci";
 export default function Dashboard() {
   const tasks = useSelector((state: RootState) => state.task.tasks);
   const pagination = useSelector((state: RootState) => state.task.pagination);
-
+  const pathname = usePathname();
   const [title, setTitle] = useState("");
   const [filter, setFilter] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
@@ -107,7 +107,7 @@ export default function Dashboard() {
         toast.success(data?.message || "Created new Task");
         const params = new URLSearchParams(searchParams.toString());
         params.set("page", "1");
-        router.push(`?${params.toString()}`);
+        router.push(`${pathname}?${params.toString()}`);
         setTitle("");
       } else {
         toast.error(data?.message || "Failed to create task");
