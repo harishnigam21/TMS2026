@@ -7,9 +7,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-linear-to-br from-black via-gray-900 to-black text-white flex flex-col">
       {/* Navbar */}
-      <header className="flex justify-between items-center px-8 py-5 border-b border-gray-800 backdrop-blur-md">
+      <header className="flex justify-between max-w-full items-center px-8 py-5 border-b gap-4 border-gray-800 backdrop-blur-md">
         <h1 className="text-2xl font-bold tracking-wide">TaskFlow</h1>
-        <div className="flex gap-3">
+        <div className=" hidden sm:flex gap-3">
           <a
             href="/login"
             className="px-4 py-2 rounded-xl border border-gray-700 hover:bg-gray-800 transition"

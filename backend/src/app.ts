@@ -1,6 +1,7 @@
 import express from "express";
 import authRoutes from "./routes/auth";
 import taskRoutes from "./routes/task";
+import userRoutes from "./routes/user";
 import { track } from "./middlewares/track";
 import credentials from "./middlewares/credentials";
 import corsOptions from "./config/cors";
@@ -14,5 +15,6 @@ app.use(express.json());
 app.use("/", track);
 app.use("/auth", authRoutes);
 app.use("/tasks", taskRoutes);
+app.use("/user", userRoutes);
 
 export default app;

@@ -82,12 +82,12 @@ export default function Register() {
     });
   };
   return (
-    <div className="min-h-screen bg-linear-to-br from-black via-gray-900 to-black text-white flex justify-center-safe items-center-safe">
+    <div className="min-h-screen bg-linear-to-br from-black via-gray-900 to-black text-white flex justify-center-safe items-center-safe p-4">
       <IoHome
         className="text-4xl text-amber-900 cursor-pointer absolute top-2 left-2"
         onClick={() => router.push("/")}
       />
-      <div className="w-95 p-8 rounded-2xl backdrop-blur-sm border border-white/20 shadow-xl">
+      <div className="w-95 p-4 rounded-2xl backdrop-blur-sm border border-white/20 shadow-xl">
         <h1 className="text-3xl font-semibold text-white text-center mb-6">
           Welcome !
         </h1>

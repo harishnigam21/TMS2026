@@ -15,10 +15,14 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { IoMdAdd, IoMdLogOut } from "react-icons/io";
 import { IoHome } from "react-icons/io5";
 import { CiSearch } from "react-icons/ci";
+import DashboardSkeleton from "./skeleton";
+import { User } from "@/types/user";
+import { setLoginStatus, setUser } from "@/redux/slices/UserSlice";
 
 export default function Dashboard() {
   const tasks = useSelector((state: RootState) => state.task.tasks);
   const pagination = useSelector((state: RootState) => state.task.pagination);
+  const user = useSelector((state: RootState) => state.user);
   const [title, setTitle] = useState("");
   const [filter, setFilter] = useState<string | null>(null);
   const router = useRouter();
@@ -33,21 +37,22 @@ export default function Dashboard() {
     useApi();
   const { sendRequest: deleteTaskRequest, loading: deleteTaskLoading } =
     useApi();
+  const { sendRequest: userRequest } = useApi();
   const { sendRequest: logoutRequest, loading: logoutLoading } = useApi();
 
   const loadTasks = useCallback(async () => {
     const query = searchParams.toString();
-    const result = await getTaskRequest(`tasks?${query}`, "GET");
-    const data = result?.data as Data<Task[]> | undefined;
-
-    if (result && result.success) {
-      dispatch(setTask(data?.data || []));
-      if (data?.pagination) {
-        dispatch(setPagination(data.pagination));
+    getTaskRequest(`tasks?${query}`, "GET").then((result) => {
+      const data = result?.data as Data<Task[]> | undefined;
+      if (result && result.success) {
+        dispatch(setTask(data?.data || []));
+        if (data?.pagination) {
+          dispatch(setPagination(data.pagination));
+        }
+      } else {
+        toast.error(data?.message || "Looks Like Your Session Expired");
       }
-    } else {
-      toast.error(data?.message || "Failed to fetch tasks");
-    }
+    });
   }, [searchParams, getTaskRequest, dispatch]);
 
   const applyChanges = useCallback(
@@ -84,6 +89,23 @@ export default function Dashboard() {
 
     return () => clearTimeout(delay);
   }, [searchInput, applyChanges, searchParams]);
+
+  useEffect(() => {
+    if (user.loginStatus == "loading" && !getTaskLoading) {
+      userRequest("user", "GET").then((result) => {
+        const data = result?.data as Data<User> | undefined;
+        if (result && result.success) {
+          if (data?.data) {
+            dispatch(setUser(data.data));
+            dispatch(setLoginStatus("authenticated"));
+          } else {
+            dispatch(setLoginStatus("unauthenticated"));
+            router.push("/login");
+          }
+        }
+      });
+    }
+  }, [dispatch, router, user.loginStatus, userRequest,getTaskLoading]);
 
   const handleFilterChange = (value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -150,7 +172,7 @@ export default function Dashboard() {
     const result = await logoutRequest("auth/logout", "PATCH");
     if (result && result.success) {
       window.localStorage.clear();
-      router.push("/login");
+      router.push("/");
     }
   };
 
@@ -160,16 +182,18 @@ export default function Dashboard() {
     return Array.from({ length: total }, (_, i) => i + 1);
   }, [pagination?.totalPages]);
 
-  return (
+  return user.loginStatus == "loading" ? (
+    <DashboardSkeleton />
+  ) : user.loginStatus == "authenticated" ? (
     <section className="max-w-screen min-h-screen bg-linear-to-br from-gray-900 via-black to-gray-900 text-white box-border">
-      <article className="max-w-4xl p-8 m-auto">
-        <div className="flex justify-center items-center relative mb-6">
+      <article className="max-w-4xl p-4 m-auto">
+        <div className="flex justify-between items-center mb-6 w-full fixed top-0 right-0 p-4 z-10 backdrop-blur-3xl">
           <IoHome
-            className="text-5xl text-amber-900 cursor-pointer"
+            className="text-4xl text-amber-900 cursor-pointer "
             onClick={() => router.push("/")}
           />
-          <div className="absolute right-0 cursor-pointer flex gap-2 items-center">
-            Welcome
+          <div className=" cursor-pointer flex gap-2 items-center">
+            Welcome {user?.userInfo?.name.split(' ')[0]}
             {logoutLoading ? (
               <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
             ) : (
@@ -182,7 +206,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold mb-6 text-center">Task Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-6 mt-20 text-center">Task Dashboard</h1>
 
         {/* Add and Search Task */}
         <div className="flex flex-col md:flex-row justify-between gap-4">
@@ -301,5 +325,9 @@ export default function Dashboard() {
         )}
       </article>
     </section>
+  ) : (
+    <div className="w-screen h-screen flex justify-center items-center">
+      <Loading />
+    </div>
   );
 }

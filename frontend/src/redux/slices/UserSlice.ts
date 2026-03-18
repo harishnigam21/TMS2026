@@ -3,12 +3,12 @@ import { User } from "@/types/user";
 
 interface UserState {
   userInfo: User | null;
-  loginStatus: boolean;
+  loginStatus: string;
 }
 
 const initialState: UserState = {
   userInfo: null,
-  loginStatus: false,
+  loginStatus: 'loading',
 };
 const UserSlice = createSlice({
   name: "user",
@@ -18,7 +18,7 @@ const UserSlice = createSlice({
       const data = action.payload;
       state.userInfo = data;
     },
-    setLoginStatus: (state, action: PayloadAction<boolean>) => {
+    setLoginStatus: (state, action: PayloadAction<string>) => {
       state.loginStatus = action.payload;
     },
   },

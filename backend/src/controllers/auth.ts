@@ -90,7 +90,7 @@ export const logOut = async (req: Request, res: Response) => {
     const cookies = req.cookies;
 
     if (!cookies?.jwt) {
-      return res.status(401).json({ message: "Cookie missing" });
+      return res.status(403).json({ message: "Cookie missing" });
     }
 
     const refreshToken = cookies.jwt;
@@ -147,7 +147,7 @@ export const refresh = async (req: Request, res: Response) => {
     const cookies = req.cookies;
 
     if (!cookies?.jwt) {
-      return res.status(401).json({ message: "Cookie missing" });
+      return res.status(403).json({ message: "Cookie missing" });
     }
 
     const refreshToken = cookies.jwt;

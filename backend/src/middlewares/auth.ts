@@ -14,7 +14,7 @@ export const authenticate = (
 
   if (!token) {
     return res
-      .status(401)
+      .status(403)
       .json({ message: "Looks Like you have not logged in yet" });
   }
 

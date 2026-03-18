@@ -27,7 +27,7 @@ const useApi = <T = unknown>() => {
     (statusCode: number) => {
       if (statusCode === 403) {
         localStorage.removeItem("acTk");
-        dispatch(setLoginStatus(false));
+        dispatch(setLoginStatus("unauthenticated"));
         router.replace("/login");
       }
     },
@@ -83,7 +83,7 @@ const useApi = <T = unknown>() => {
             const refreshRes = await fetch(
               `${process.env.NEXT_PUBLIC_BACKEND_HOST}/auth/refresh`,
               {
-                method: "PATCH",
+                method: "GET",
                 credentials: "include",
               },
             );
@@ -93,7 +93,7 @@ const useApi = <T = unknown>() => {
             const refreshData = await refreshRes.json();
             localStorage.setItem("acTk", refreshData.acTk);
             dispatch(setUser(refreshData.data));
-            dispatch(setLoginStatus(true));
+            dispatch(setLoginStatus("authenticated"));
             return await sendRequest(
               url,
               method,
@@ -104,7 +104,7 @@ const useApi = <T = unknown>() => {
             );
           } catch (err) {
             localStorage.removeItem("acTk");
-            dispatch(setLoginStatus(false));
+            dispatch(setLoginStatus("unauthenticated"));
             router.replace("/login");
 
             return {

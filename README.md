@@ -55,6 +55,9 @@ backend/
 │ ├ middlewares/ # Auth middleware (JWT)
 │ ├ routes/ # API routes
 │ ├ types/ # TypeScript types
+│ ├ utils/
+│ ├ validations/
+│ ├ app.ts
 │ └ server.ts # Entry point
 │
 ├ prisma/
@@ -62,9 +65,14 @@ backend/
 │ └ migrations/
 
 frontend/
-├ app/
-├ components/
-└ styles/
+├ src/
+      ├ app/
+      ├ components/
+      ├ hooks/
+      ├ redux/
+      ├ types/
+      ├ utils/
+      └ styles/
 
 ---
 
@@ -126,7 +134,7 @@ npm run dev
 POST   /auth/register
 POST   /auth/login
 PATCH   /auth/logout
-PATCH   /auth/refresh <later will be change to GET>
+GET   /auth/refresh
 ```
 
 ### Tasks
