@@ -14,7 +14,41 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
+  const validate = () => {
+    if (name.length < 3) {
+      toast.error("Name must be at least 3 characters !");
+      return false;
+    }
+    //  Email: Standard RFC format
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      toast.error(
+        "Please enter a valid email address (e.g., name@domain.com).",
+      );
+      return false;
+    }
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters.");
+      return false;
+    }
+    if (!/[A-Z]/.test(password)) {
+      toast.error("Password needs an uppercase letter.");
+      return false;
+    }
+    if (!/[0-9]/.test(password)) {
+      toast.error("Password needs a number.");
+      return false;
+    }
+    if (!/[@$!%*?&]/.test(password)) {
+      toast.error("Password needs a special character.");
+      return false;
+    }
+    return true;
+  };
   const handleRegistration = async () => {
+    if (!validate()) {
+      return;
+    }
     //sending request to the backend to verify user
     await sendRequest(
       "auth/register",

@@ -17,7 +17,25 @@ export default function Login() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const validate = () => {
+    //  Email: Standard RFC format
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      toast.error(
+        "Please enter a valid email address (e.g., name@domain.com).",
+      );
+      return false;
+    }
+    if (password.trim().length < 8) {
+      toast.error("Invalid Password");
+      return false;
+    }
+    return true;
+  };
   const handleLogin = async () => {
+    if (!validate()) {
+      return;
+    }
     //sending request to the backend to verify user
     await sendRequest(
       "auth/login",
@@ -50,7 +68,7 @@ export default function Login() {
         const errorMessage =
           result?.error || data?.message || "An error occurred";
         toast.error(errorMessage);
-        if (result.status === 400 || result.status === 404) {
+        if (result.status === 404) {
           setTimeout(() => {
             router.push("/register");
           }, 2000);
