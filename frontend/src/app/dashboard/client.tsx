@@ -21,7 +21,6 @@ export default function Dashboard() {
   const pagination = useSelector((state: RootState) => state.task.pagination);
   const [title, setTitle] = useState("");
   const [filter, setFilter] = useState<string | null>(null);
-  
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
@@ -30,8 +29,10 @@ export default function Dashboard() {
   const [searchInput, setSearchInput] = useState(search);
 
   const { sendRequest: getTaskRequest, loading: getTaskLoading } = useApi();
-  const { sendRequest: createTaskRequest, loading: createTaskLoading } = useApi();
-  const { sendRequest: deleteTaskRequest, loading: deleteTaskLoading } = useApi();
+  const { sendRequest: createTaskRequest, loading: createTaskLoading } =
+    useApi();
+  const { sendRequest: deleteTaskRequest, loading: deleteTaskLoading } =
+    useApi();
   const { sendRequest: logoutRequest, loading: logoutLoading } = useApi();
 
   const loadTasks = useCallback(async () => {
@@ -49,18 +50,19 @@ export default function Dashboard() {
     }
   }, [searchParams, getTaskRequest, dispatch]);
 
+  const applyChanges = useCallback(
+    (params: URLSearchParams) => {
+      const newQuery = params.toString();
+      const currentQuery = searchParams.toString();
 
-  const applyChanges = useCallback((params: URLSearchParams) => {
-    const newQuery = params.toString();
-    const currentQuery = searchParams.toString();
-
-    if (newQuery === currentQuery) {
-      loadTasks();
-    } else {
-      router.push(`?${newQuery}`);
-    }
-  }, [router, searchParams, loadTasks]);
-
+      if (newQuery === currentQuery) {
+        loadTasks();
+      } else {
+        router.push(`?${newQuery}`);
+      }
+    },
+    [router, searchParams, loadTasks],
+  );
 
   useEffect(() => {
     loadTasks();
@@ -75,7 +77,7 @@ export default function Dashboard() {
       const params = new URLSearchParams(searchParams.toString());
       if (searchInput) params.set("search", searchInput);
       else params.delete("search");
-      
+
       params.set("page", "1"); // Reset to page 1 on search
       applyChanges(params);
     }, 500);
@@ -122,7 +124,7 @@ export default function Dashboard() {
 
     if (result && result.success) {
       toast.success(data?.message || "Task Deleted");
-      
+
       const currentPage = Number(searchParams.get("page") || 1);
       if (tasks.length === 1 && currentPage > 1) {
         const params = new URLSearchParams(searchParams.toString());
@@ -166,7 +168,8 @@ export default function Dashboard() {
             className="text-5xl text-amber-900 cursor-pointer"
             onClick={() => router.push("/")}
           />
-          <div className="absolute right-0 cursor-pointer">
+          <div className="absolute right-0 cursor-pointer flex gap-2 items-center">
+            Welcome
             {logoutLoading ? (
               <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
             ) : (
@@ -200,7 +203,9 @@ export default function Dashboard() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !createTaskLoading && createTask()}
+              onKeyDown={(e) =>
+                e.key === "Enter" && !createTaskLoading && createTask()
+              }
               placeholder="Add new task..."
               className="border border-gray-700 bg-gray-800 p-2 rounded w-full focus:outline-none focus:border-green-500"
             />
