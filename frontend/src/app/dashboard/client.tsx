@@ -12,281 +12,240 @@ import toast from "react-hot-toast";
 import TaskCard from "./Task";
 import { FaCaretLeft, FaCaretRight } from "react-icons/fa6";
 import { useSearchParams, useRouter } from "next/navigation";
-import { IoMdAdd } from "react-icons/io";
-import { IoMdLogOut } from "react-icons/io";
+import { IoMdAdd, IoMdLogOut } from "react-icons/io";
 import { IoHome } from "react-icons/io5";
 import { CiSearch } from "react-icons/ci";
 
 export default function Dashboard() {
   const tasks = useSelector((state: RootState) => state.task.tasks);
   const pagination = useSelector((state: RootState) => state.task.pagination);
-
   const [title, setTitle] = useState("");
   const [filter, setFilter] = useState<string | null>(null);
-  const dispatch = useDispatch<AppDispatch>();
+  
   const router = useRouter();
   const searchParams = useSearchParams();
-  const searchString = searchParams.toString();
+  const dispatch = useDispatch<AppDispatch>();
 
-  const { sendRequest: getTaskRequest, loading: getTaskLoading } = useApi();
-  const { sendRequest: createTaskRequest, loading: createTaskLoading } =
-    useApi();
-  const { sendRequest: deleteTaskRequest, loading: deleteTaskLoading } =
-    useApi();
-  const { sendRequest: logoutRequest, loading: logoutLoading } = useApi();
-
-  const handleFilterChange = (value: string | null) => {
-    const params = new URLSearchParams(searchString);
-    if (!value) {
-      params.delete("filter");
-    } else {
-      params.set("filter", value);
-    }
-    params.set("page", "1");
-    router.push(`?${params.toString()}`);
-  };
   const search = searchParams.get("search") || "";
   const [searchInput, setSearchInput] = useState(search);
-  const handleSearch = useCallback(
-    (value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
 
-      if (value) {
-        params.set("search", value);
-      } else {
-        params.delete("search");
+  const { sendRequest: getTaskRequest, loading: getTaskLoading } = useApi();
+  const { sendRequest: createTaskRequest, loading: createTaskLoading } = useApi();
+  const { sendRequest: deleteTaskRequest, loading: deleteTaskLoading } = useApi();
+  const { sendRequest: logoutRequest, loading: logoutLoading } = useApi();
+
+  const loadTasks = useCallback(async () => {
+    const query = searchParams.toString();
+    const result = await getTaskRequest(`tasks?${query}`, "GET");
+    const data = result?.data as Data<Task[]> | undefined;
+
+    if (result && result.success) {
+      dispatch(setTask(data?.data || []));
+      if (data?.pagination) {
+        dispatch(setPagination(data.pagination));
       }
+    } else {
+      toast.error(data?.message || "Failed to fetch tasks");
+    }
+  }, [searchParams, getTaskRequest, dispatch]);
 
-      params.set("page", "1"); //  reset page
 
-      router.push(`?${params.toString()}`);
-    },
-    [router, searchParams],
-  );
-  //Debouncing logic to make some delay on every strike so that in ms request can be avoided
+  const applyChanges = useCallback((params: URLSearchParams) => {
+    const newQuery = params.toString();
+    const currentQuery = searchParams.toString();
+
+    if (newQuery === currentQuery) {
+      loadTasks();
+    } else {
+      router.push(`?${newQuery}`);
+    }
+  }, [router, searchParams, loadTasks]);
+
+
+  useEffect(() => {
+    loadTasks();
+  }, [loadTasks]);
+
+  // Debounced Search Logic
   useEffect(() => {
     const currentSearch = searchParams.get("search") || "";
     if (searchInput === currentSearch) return;
+
     const delay = setTimeout(() => {
-      handleSearch(searchInput);
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchInput) params.set("search", searchInput);
+      else params.delete("search");
+      
+      params.set("page", "1"); // Reset to page 1 on search
+      applyChanges(params);
     }, 500);
+
     return () => clearTimeout(delay);
-  }, [searchInput, handleSearch, searchParams]);
-  useEffect(() => {
-    async function loadTasks() {
-      const params = searchString;
-      await getTaskRequest(`tasks?${params}`, "GET").then((result) => {
-        const data = result?.data as Data<Task[]> | undefined;
+  }, [searchInput, applyChanges, searchParams]);
 
-        if (result && result.success) {
-          dispatch(setTask(data?.data || []));
-
-          if (data?.pagination) {
-            dispatch(setPagination(data.pagination));
-          }
-        } else {
-          toast.error(data?.message || "Failed to fetch tasks");
-        }
-      });
+  const handleFilterChange = (value: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (!value) {
+      params.delete("filter");
+      setFilter(null);
+    } else {
+      params.set("filter", value);
+      setFilter(value === "true" ? "complete" : "incomplete");
     }
-    loadTasks();
-  }, [searchParams, dispatch, getTaskRequest, searchString]);
+    params.set("page", "1");
+    applyChanges(params);
+  };
 
   const createTask = async () => {
-    setSearchInput("");
     if (!title || title.trim().length < 2) {
       toast.error("Invalid Task Title");
       return;
     }
-    createTaskRequest("tasks", "POST", { title }).then((result) => {
-      const data = result?.data as Data<Task> | undefined;
-      if (result && result.success) {
-        toast.success(data?.message || "Created new Task");
-        const params = new URLSearchParams(searchString);
-        params.set("page", "1");
-        router.push(`?${params.toString()}`);
-        setTitle("");
-      } else {
-        toast.error(data?.message || "Failed to create task");
-      }
-    });
+
+    const result = await createTaskRequest("tasks", "POST", { title });
+    const data = result?.data as Data<Task> | undefined;
+
+    if (result && result.success) {
+      toast.success(data?.message || "Created new Task");
+      setTitle("");
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("page", "1");
+      applyChanges(params);
+    } else {
+      toast.error(data?.message || "Failed to create task");
+    }
   };
+
   const deleteTheTask = async (id: number) => {
-    if (!id) {
-      toast.error("Invalid Task");
-      return;
-    }
-    deleteTaskRequest(`tasks/${id}`, "DELETE").then((result) => {
-      const data = result?.data as Data<number> | undefined;
-      if (result && result.success) {
-        toast.success(data?.message || "Task Deleted");
-        const currentPage = Number(searchParams.get("page") || 1);
-        if (tasks.length === 1 && currentPage > 1) {
-          const params = new URLSearchParams(searchString);
-          params.set("page", (currentPage - 1).toString());
-          router.push(`?${params.toString()}`);
-        } else {
-          router.refresh();
-        }
-        //Don't need after pagination, so let be here
-        if (data?.data) {
-          dispatch(deleteTask(data?.data));
-        }
+    const result = await deleteTaskRequest(`tasks/${id}`, "DELETE");
+    const data = result?.data as Data<number> | undefined;
+
+    if (result && result.success) {
+      toast.success(data?.message || "Task Deleted");
+      
+      const currentPage = Number(searchParams.get("page") || 1);
+      if (tasks.length === 1 && currentPage > 1) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("page", (currentPage - 1).toString());
+        router.push(`?${params.toString()}`);
       } else {
-        const errMessage = data?.message || "Failed to delete task";
-        toast.error(errMessage);
+        loadTasks(); // Just refresh the current view
       }
-    });
-  };
-  // pagination logic
-  const changePage = (page: number) => {
-    const params = new URLSearchParams(searchString);
 
-    params.set("page", page.toString());
-
-    router.push(`?${params.toString()}`);
-  };
-
-  const goNext = () => {
-    if (!pagination?.thisPage) return;
-    changePage(pagination.thisPage + 1);
-  };
-
-  const goPrev = () => {
-    if (!pagination?.thisPage) return;
-    changePage(pagination.thisPage - 1);
-  };
-
-  const totalPages = pagination?.totalPages;
-  //avoiding every render page calculation
-  const pageNumbers = useMemo(() => {
-    if (!totalPages) return [];
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(i);
+      if (data?.data) dispatch(deleteTask(data.data));
+    } else {
+      toast.error(data?.message || "Failed to delete task");
     }
-    return pages;
-  }, [totalPages]);
+  };
+
+  const changePage = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", page.toString());
+    applyChanges(params);
+  };
 
   const handleLogout = async () => {
-    logoutRequest("auth/logout", "PATCH").then((result) => {
-      if (result && result.success) {
-        window.localStorage.clear();
-        router.push("login");
-      }
-    });
+    const result = await logoutRequest("auth/logout", "PATCH");
+    if (result && result.success) {
+      window.localStorage.clear();
+      router.push("/login");
+    }
   };
+
+  // --- Using Memos to avoid recalculation---
+  const pageNumbers = useMemo(() => {
+    const total = pagination?.totalPages || 0;
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }, [pagination?.totalPages]);
+
   return (
     <section className="max-w-screen min-h-screen bg-linear-to-br from-gray-900 via-black to-gray-900 text-white box-border">
       <article className="max-w-4xl p-8 m-auto">
-        <div className="flex justify-center-safe">
+        <div className="flex justify-center items-center relative mb-6">
           <IoHome
             className="text-5xl text-amber-900 cursor-pointer"
             onClick={() => router.push("/")}
           />
-        </div>
-        <h1 className="text-3xl font-bold mb-6 text-center">Task Dashboard</h1>
-        <div className="absolute top-2 right-2 cursor-pointer">
-          {logoutLoading ? (
-            <div className="spinner"></div>
-          ) : (
-            <IoMdLogOut
-              title="logout"
-              className=" text-4xl text-blue-600 "
-              onClick={handleLogout}
-            />
-          )}
+          <div className="absolute right-0 cursor-pointer">
+            {logoutLoading ? (
+              <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+            ) : (
+              <IoMdLogOut
+                title="logout"
+                className="text-4xl text-blue-600 hover:text-blue-400 transition-colors"
+                onClick={handleLogout}
+              />
+            )}
+          </div>
         </div>
 
+        <h1 className="text-3xl font-bold mb-6 text-center">Task Dashboard</h1>
+
         {/* Add and Search Task */}
-        <div className="flex flex-wrap min-[480]:flex-nowrap justify-between gap-4">
-          <div className="flex gap-2 mb-6 w-full">
-            <button
-              disabled={createTaskLoading}
-              className=" text-white cursor-pointer w-10 h-10 rounded-full flex items-center justify-center gap-2"
-              onClick={() => {
-                if (search.length == 0) {
-                } else {
-                  handleSearch(searchInput);
-                }
-              }}
-            >
-              <CiSearch className="text-3xl" />
-            </button>
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+          <div className="flex gap-2 mb-2 w-full">
+            <div className="flex items-center justify-center w-10">
+              <CiSearch className="text-3xl text-gray-400" />
+            </div>
             <input
               type="search"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search Here..."
-              className="border p-2 rounded w-full"
+              className="border border-gray-700 bg-gray-800 p-2 rounded w-full focus:outline-none focus:border-blue-500"
             />
           </div>
-          <div className="flex gap-2 mb-6 w-full">
+          <div className="flex gap-2 mb-2 w-full">
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !createTaskLoading) createTask();
-              }}
+              onKeyDown={(e) => e.key === "Enter" && !createTaskLoading && createTask()}
               placeholder="Add new task..."
-              className="border p-2 rounded w-full"
+              className="border border-gray-700 bg-gray-800 p-2 rounded w-full focus:outline-none focus:border-green-500"
             />
-
             <button
               disabled={createTaskLoading}
-              className="bg-green-600 text-white cursor-pointer min-w-10 h-10 rounded-full flex items-center justify-center gap-2"
-              onClick={() => {
-                if (title.length == 0) {
-                } else {
-                  createTask();
-                }
-              }}
+              className="bg-green-600 hover:bg-green-500 text-white cursor-pointer min-w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-50"
+              onClick={createTask}
             >
               {createTaskLoading ? (
-                <span className="spinner"></span>
+                <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
               ) : (
                 <IoMdAdd className="text-3xl" />
               )}
             </button>
           </div>
         </div>
-        {/* filter buttons */}
 
+        {/* Filter buttons */}
         <div className="flex flex-wrap gap-4 items-center mb-8 mt-4">
           <button
-            className={`py-1 px-3 text-sm rounded-full hover:scale-105 transition-all ${filter == "complete" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
-            onClick={() => {
-              setFilter("complete");
-              handleFilterChange("true");
-            }}
+            className={`py-1 px-4 text-sm rounded-full transition-all ${filter === "complete" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
+            onClick={() => handleFilterChange("true")}
           >
             Complete
           </button>
           <button
-            className={`py-1 px-3 text-sm rounded-full hover:scale-105 transition-all ${filter == "incomplete" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
-            onClick={() => {
-              setFilter("incomplete");
-              handleFilterChange("false");
-            }}
+            className={`py-1 px-4 text-sm rounded-full transition-all ${filter === "incomplete" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
+            onClick={() => handleFilterChange("false")}
           >
-            InComplete
+            Incomplete
           </button>
-          <p
-            className="text-red-500 cursor-pointer"
-            onClick={() => {
-              setFilter(null);
-              handleFilterChange(null);
-            }}
+          <button
+            className="text-red-500 hover:text-red-400 cursor-pointer text-sm"
+            onClick={() => handleFilterChange(null)}
           >
-            clear
-          </p>
+            Clear Filters
+          </button>
         </div>
 
         {/* Task List */}
-        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {getTaskLoading ? (
-            <Loading />
+            <div className="col-span-full flex justify-center py-10">
+              <Loading />
+            </div>
           ) : tasks.length > 0 ? (
             tasks.map((task) => (
               <TaskCard
@@ -297,46 +256,44 @@ export default function Dashboard() {
               />
             ))
           ) : (
-            <strong className="text-red-700 col-span-full text-center">
-              No Task Found!
-            </strong>
+            <div className="col-span-full text-center py-10 bg-gray-800/50 rounded-lg">
+              <strong className="text-red-400">No Tasks Found!</strong>
+            </div>
           )}
         </div>
 
         {/* Pagination */}
-        <div className="flex justify-center-safe overflow-x-auto noscrollbar items-center mt-8">
-          {pagination && !getTaskLoading && pagination.totalPages > 1 && (
-            <div className="flex flex-nowrap items-center gap-2 ">
-              {pagination.thisPage > 1 && (
-                <FaCaretLeft
-                  onClick={goPrev}
-                  className="cursor-pointer text-xl"
-                />
-              )}
-
+        {pagination && pagination.totalPages > 1 && !getTaskLoading && (
+          <div className="flex justify-center items-center gap-4 mt-10">
+            {pagination.thisPage > 1 && (
+              <FaCaretLeft
+                onClick={() => changePage(pagination.thisPage - 1)}
+                className="cursor-pointer text-2xl hover:text-blue-500"
+              />
+            )}
+            <div className="flex gap-2 overflow-x-auto px-2">
               {pageNumbers.map((i) => (
                 <button
                   key={i}
                   onClick={() => changePage(i)}
-                  className={`px-3 py-1 cursor-pointer rounded border ${
+                  className={`px-3 py-1 min-w-8.75 cursor-pointer rounded border transition-colors ${
                     pagination.thisPage === i
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-black"
+                      ? "bg-blue-600 border-blue-600 text-white"
+                      : "bg-gray-800 border-gray-700 hover:bg-gray-700"
                   }`}
                 >
                   {i}
                 </button>
               ))}
-
-              {pagination.thisPage < pagination.totalPages && (
-                <FaCaretRight
-                  onClick={goNext}
-                  className="cursor-pointer text-xl"
-                />
-              )}
             </div>
-          )}
-        </div>
+            {pagination.thisPage < pagination.totalPages && (
+              <FaCaretRight
+                onClick={() => changePage(pagination.thisPage + 1)}
+                className="cursor-pointer text-2xl hover:text-blue-500"
+              />
+            )}
+          </div>
+        )}
       </article>
     </section>
   );

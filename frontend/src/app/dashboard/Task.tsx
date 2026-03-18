@@ -159,7 +159,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
           onClick={() => deleteTheTask(task.id)}
         >
           <AiFillDelete
-            className={`text-xl text-red-500 ${deleteTaskLoading ? "animate-pulse duration-100" : ""}`}
+            className={`text-xl text-red-500 ${deleteTaskLoading ? "animate-ping duration-100" : ""}`}
           />
         </button>
       </div>
