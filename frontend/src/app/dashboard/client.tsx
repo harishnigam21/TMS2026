@@ -98,14 +98,14 @@ export default function Dashboard() {
           if (data?.data) {
             dispatch(setUser(data.data));
             dispatch(setLoginStatus("authenticated"));
-          } else {
-            dispatch(setLoginStatus("unauthenticated"));
-            router.push("/login");
           }
+        } else {
+          dispatch(setLoginStatus("unauthenticated"));
+          router.push("/login");
         }
       });
     }
-  }, [dispatch, router, user.loginStatus, userRequest,getTaskLoading]);
+  }, [dispatch, router, user.loginStatus, userRequest, getTaskLoading]);
 
   const handleFilterChange = (value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -193,7 +193,7 @@ export default function Dashboard() {
             onClick={() => router.push("/")}
           />
           <div className=" cursor-pointer flex gap-2 items-center">
-            Welcome {user?.userInfo?.name.split(' ')[0]}
+            Welcome {user?.userInfo?.name.split(" ")[0]}
             {logoutLoading ? (
               <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
             ) : (
@@ -206,7 +206,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold mb-6 mt-20 text-center">Task Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-6 mt-20 text-center">
+          Task Dashboard
+        </h1>
 
         {/* Add and Search Task */}
         <div className="flex flex-col md:flex-row justify-between gap-4">

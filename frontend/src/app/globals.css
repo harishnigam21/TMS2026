@@ -48,12 +48,30 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 textarea:-webkit-autofill,
 select:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0px 1000px #111827 inset !important; 
-  -webkit-text-fill-color: #ffffff !important; 
+  -webkit-box-shadow: 0 0 0px 1000px #111827 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
   transition: background-color 5000s ease-in-out 0s;
   border: 1px solid #374151;
 }
 input,
 textarea {
   caret-color: #ffffff;
+}
+
+.manual-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.manual-scroll::-webkit-scrollbar-thumb {
+  background: #1100ff;
+  border-radius: 9999px;
+}
+
+.manual-scroll::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+.manual-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af transparent;
 }

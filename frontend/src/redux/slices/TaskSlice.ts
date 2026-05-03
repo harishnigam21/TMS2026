@@ -1,5 +1,5 @@
 import { Pagination } from "@/types/pagination";
-import { Task } from "@/types/task";
+import { Note, Task } from "@/types/task";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface TaskState {
@@ -31,6 +31,7 @@ const TaskSlice = createSlice({
         state.tasks[index] = {
           ...state.tasks[index],
           completed: action.payload.completed,
+          updatedAt: action.payload.updatedAt,
         };
       }
     },
@@ -40,15 +41,16 @@ const TaskSlice = createSlice({
     setPagination: (state, action: PayloadAction<Pagination>) => {
       state.pagination = action.payload;
     },
-    addNote: (state, action: PayloadAction<{ id: number; note: string }>) => {
+    addNote: (state, action: PayloadAction<Note>) => {
       const index = state.tasks.findIndex(
-        (item) => item.id === action.payload.id,
+        (item) => item.id === action.payload.taskId,
       );
 
       if (index !== -1) {
         state.tasks[index] = {
           ...state.tasks[index],
-          notes: [...state.tasks[index].notes, action.payload.note],
+          updatedAt: action.payload.updatedAt,
+          notes: [...state.tasks[index].notes, action.payload],
         };
       }
     },
