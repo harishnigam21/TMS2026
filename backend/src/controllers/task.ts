@@ -205,3 +205,86 @@ export const addNote = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+export const editNote = async (req: AuthRequest, res: Response) => {
+  try {
+    const taskId = Number(req.params.tid);
+    const noteId = Number(req.params.nid);
+    const userId = Number(req.userId);
+    const { note } = req.body || {};
+
+    const cleanNote = note?.trim();
+    if (!cleanNote || cleanNote.length < 2) {
+      return res.status(400).json({ message: "Invalid Note" });
+    }
+
+    const editNote = await prisma.$transaction(async (tx) => {
+      const note = await tx.note.findUnique({
+        where: { id: noteId, taskId, task: { userId } },
+      });
+
+      if (!note) {
+        throw new Error("Note not found");
+      }
+
+      const Enote = tx.note.update({
+        where: { id: noteId },
+        data: { note: cleanNote },
+      });
+      await tx.task.update({
+        where: { id: taskId },
+        data: { updatedAt: new Date() },
+      });
+      return Enote;
+    });
+
+    return res.status(200).json({
+      message: "Note update successfully",
+      data: editNote,
+    });
+  } catch (error: any) {
+    console.error("Error from editNote controller", error);
+    if (error.message == "Note not found") {
+      return res.status(404).json({ message: "Note not found" });
+    }
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const deleteNote = async (req: AuthRequest, res: Response) => {
+  try {
+    const taskId = Number(req.params.tid);
+    const noteId = Number(req.params.nid);
+    const userId = Number(req.userId);
+    const newDate = new Date();
+
+    const deleteNote = await prisma.$transaction(async (tx) => {
+      const note = await tx.note.findUnique({
+        where: { id: noteId, taskId, task: { userId } },
+      });
+
+      if (!note) {
+        throw new Error("Note not found");
+      }
+
+      const Dnote = tx.note.delete({
+        where: { id: noteId },
+      });
+      await tx.task.update({
+        where: { id: taskId },
+        data: { updatedAt: newDate },
+      });
+      return Dnote;
+    });
+
+    return res.status(200).json({
+      message: "Note deleted successfully",
+      data: { ...deleteNote, updatedAt: newDate },
+    });
+  } catch (error: any) {
+    console.error("Error from deleteNote controller", error);
+    if (error.message == "Note not found") {
+      return res.status(404).json({ message: "Note not found" });
+    }
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
