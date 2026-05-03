@@ -1,5 +1,5 @@
 import useApi from "@/hooks/useApi";
-import { addNote, updateTask } from "@/redux/slices/TaskSlice";
+import { addNote, updateNote, updateTask } from "@/redux/slices/TaskSlice";
 import { Data } from "@/types/data";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
@@ -25,10 +25,16 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
   const [taskInfo, setTaskInfo] = useState<boolean>(false);
   const dispatch = useDispatch<AppDispatch>();
   const [notesValue, setNotesValue] = useState<string>("");
+  const [inputType, setInputType] = useState<{
+    type: string;
+    prevValue: string;
+    id: number;
+  } | null>(null);
   const { sendRequest: updateTaskRequest, loading: updateTaskLoading } =
     useApi();
   const { sendRequest: noteCreateRequest, loading: noteCreateLoading } =
     useApi();
+  const { sendRequest: noteEditRequest, loading: noteEditLoading } = useApi();
 
   const updateTheTask = async (id: number) => {
     if (!id) {
@@ -54,6 +60,31 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
   const handleNotesCreate = async (id: number) => {
     if (!id) {
       toast.error("Invalid Task");
+      return;
+    }
+    if (inputType && inputType.type && inputType.type == "noteEdit") {
+      if (inputType.prevValue.trim() == notesValue.trim()) {
+        toast.error("No Modification done");
+        return;
+      }
+      if (inputType.id) {
+        noteEditRequest(`tasks/${id}/note/${inputType.id}/edit`, "POST", {
+          note: notesValue,
+        }).then((result) => {
+          const data = result?.data as Data<Note> | undefined;
+          if (result && result.success) {
+            toast.success(data?.message || "Updated Note");
+            if (data?.data) {
+              dispatch(updateNote(data.data));
+            }
+            setNotesValue("");
+            setInputType(null);
+          } else {
+            const errMessage = data?.message || "Failed to update note";
+            toast.error(errMessage);
+          }
+        });
+      }
       return;
     }
     noteCreateRequest(`tasks/${id}/note`, "PATCH", { note: notesValue }).then(
@@ -85,10 +116,10 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
     <div
       style={{ maxHeight: `${expand ? 500 : height + 24}px` }}
       className="flex flex-col justify-between gap-2 border p-3 rounded-xl overflow-hidden transition-all duration-200"
-      // onMouseLeave={() => {
-      //   setExpand(false);
-      //   setTaskInfo(false);
-      // }}
+      onMouseLeave={() => {
+        setExpand(false);
+        setTaskInfo(false);
+      }}
     >
       <div ref={ref}>
         <div
@@ -171,10 +202,16 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
           {task.notes && task.notes.length > 0 && (
             <div
               ref={noteScrollRef}
-              className="flex flex-col gap-2 max-h-40 overflow-auto manual-scroll bg-gray-500/20 p-2 rounded-xl"
+              className="flex flex-col max-h-40 overflow-auto manual-scroll bg-gray-500/20 p-2 rounded-xl"
             >
               {task.notes.map((note, index) => (
-                <Notes key={`task/notes/${index}`} note={note} index={index} />
+                <Notes
+                  key={`task/notes/${index}`}
+                  note={note}
+                  index={index}
+                  setNotesValue={setNotesValue}
+                  setInputType={setInputType}
+                />
               ))}
             </div>
           )}
@@ -194,7 +231,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                   }
                 }}
               />
-              {noteCreateLoading ? (
+              {noteCreateLoading || noteEditLoading ? (
                 <span className="spinner"></span>
               ) : (
                 <IoMdSend
