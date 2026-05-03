@@ -38,6 +38,9 @@ export const login = async (req: Request, res: Response) => {
   try {
     const user = await prisma.user.findUnique({
       where: { email },
+      include: {
+        tasks: true,
+      },
     });
     if (!user) {
       return res.status(400).json({ message: "You have not registered yet" });
@@ -69,7 +72,6 @@ export const login = async (req: Request, res: Response) => {
       sameSite: in_production ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
-
     return res.status(200).json({
       message: "Successfully verified",
       acTk: accessToken,
@@ -77,6 +79,7 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        tasks: user.tasks,
       },
     });
   } catch (error) {
@@ -155,6 +158,9 @@ export const refresh = async (req: Request, res: Response) => {
       where: {
         refreshToken: refreshToken,
       },
+      include: {
+        tasks: true,
+      },
     });
     if (!user) {
       res.clearCookie("jwt", {
@@ -197,7 +203,12 @@ export const refresh = async (req: Request, res: Response) => {
 
         return res.status(200).json({
           acTk: access_token,
-          data: { id: user.id, name: user.name, email: user.email },
+          data: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            tasks: user.tasks,
+          },
         });
       },
     );

@@ -13,19 +13,40 @@ model User {
   email        String @unique
   password     String
   refreshToken String @default("new") @db.VarChar(256)
+
   tasks        Task[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Task {
   id          Int     @id @default(autoincrement())
   title       String
   description String  @default("")
-  notes       Json
   completed   Boolean @default(false)
-  createdAt   String
-  userId      Int
-  user        User    @relation(fields: [userId], references: [id])
 
-  @@unique([id, userId])
+  userId      Int
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  notes       Note[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@index([userId, createdAt, id])
+}
+
+model Note {
+  id        Int     @id @default(autoincrement())
+  note      String
+  completed Boolean @default(false)
+
+  taskId    Int
+  task      Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId])
 }

@@ -5,6 +5,9 @@ export const getUser = async (req: AuthRequest, res: Response) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
+      include: {
+        tasks: true,
+      },
     });
     if (!user) {
       return res.status(400).json({ message: "You hare not valid User" });
@@ -15,6 +18,7 @@ export const getUser = async (req: AuthRequest, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        tasks: user.tasks,
       },
     });
   } catch (error) {

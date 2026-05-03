@@ -10,13 +10,10 @@ export const createTask = async (req: AuthRequest, res: Response) => {
     if (!checkTitle || checkTitle.length < 2) {
       return res.status(400).json({ message: "Invalid Title Name" });
     }
-    const date = new Date();
     const task = await prisma.task.create({
       data: {
-        createdAt: date.toISOString(),
         title: checkTitle,
         userId: req.userId!,
-        notes: [],
       },
     });
     return res.status(201).json({
@@ -27,7 +24,6 @@ export const createTask = async (req: AuthRequest, res: Response) => {
         completed: task.completed,
         description: task.description,
         createdAt: task.createdAt,
-        notes: task.notes,
       },
     });
   } catch (error) {
@@ -87,6 +83,9 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
       skip: skip,
       where: filters,
       orderBy: { id: "desc" },
+      include: {
+        notes: true,
+      },
     });
 
     return res.status(200).json({
@@ -167,40 +166,42 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
 
 export const addNote = async (req: AuthRequest, res: Response) => {
   try {
-    const id = Number(req.params.id);
+    const taskId = Number(req.params.id);
     const { note } = req.body || {};
-    const cleanNote = note?.trim() || "";
-    if (!note || !cleanNote || cleanNote.length < 2) {
+
+    const cleanNote = note?.trim();
+    if (!cleanNote || cleanNote.length < 2) {
       return res.status(400).json({ message: "Invalid Note" });
     }
-    const updatedTask = await prisma.$transaction(async (tx) => {
+
+    const newNote = await prisma.$transaction(async (tx) => {
       const task = await tx.task.findUnique({
-        where: { id, userId: req.userId },
+        where: { id: taskId, userId: req.userId },
       });
+
       if (!task) {
         throw new Error("Task not found");
       }
-      const existingNotes = Array.isArray(task.notes) ? task.notes : [];
-      const updatedNotes = [...existingNotes, note];
-      return tx.task.update({
-        where: { id, userId: req.userId },
+
+      const note = tx.note.create({
         data: {
-          notes: updatedNotes,
+          note: cleanNote,
+          taskId: taskId,
         },
       });
+      await tx.task.update({
+        where: { id: taskId },
+        data: { updatedAt: new Date() },
+      });
+      return note;
     });
-    return res.status(200).json({
-      message: "Note added Successfully",
-      data: { id: updatedTask.id, note },
+
+    return res.status(201).json({
+      message: "Note added successfully",
+      data: newNote,
     });
   } catch (error) {
     console.error("Error from addNote controller", error);
-    const prismaError = handlePrismaError(error, "Task");
-    if (prismaError) {
-      return res.status(prismaError.status).json({
-        message: prismaError.message,
-      });
-    }
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
