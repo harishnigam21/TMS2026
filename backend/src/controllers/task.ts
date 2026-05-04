@@ -62,7 +62,14 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
     const search = req.query.search as string | undefined;
     const filters: any = {
       userId: req.userId,
-      ...(filter !== undefined && { completed: filter === "true" }),
+      ...(filter !== undefined &&
+        (filter == "completed"
+          ? { completed: true }
+          : filter == "incompleted"
+            ? { completed: false }
+            : filter == "starred"
+              ? { star: true }
+              : {})),
       ...(search && {
         title: {
           contains: search,

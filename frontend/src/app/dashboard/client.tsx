@@ -14,7 +14,14 @@ import { useSearchParams, useRouter } from "next/navigation";
 import DashboardSkeleton from "./skeleton";
 import { User } from "@/types/user";
 import { setLoginStatus, setUser } from "@/redux/slices/UserSlice";
-import { ChevronLeft, ChevronRight, House, LogOut, Plus, Search } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  House,
+  LogOut,
+  Plus,
+  Search,
+} from "lucide-react";
 
 export default function Dashboard() {
   const tasks = useSelector((state: RootState) => state.task.tasks);
@@ -104,14 +111,16 @@ export default function Dashboard() {
     }
   }, [dispatch, router, user.loginStatus, userRequest, getTaskLoading]);
 
-  const handleFilterChange = (value: string | null) => {
+  const handleFilterChange = (
+    value: "completed" | "incompleted" | "starred" | null,
+  ) => {
     const params = new URLSearchParams(searchParams.toString());
     if (!value) {
       params.delete("filter");
       setFilter(null);
     } else {
       params.set("filter", value);
-      setFilter(value === "true" ? "complete" : "incomplete");
+      setFilter(value);
     }
     params.set("page", "1");
     applyChanges(params);
@@ -248,16 +257,22 @@ export default function Dashboard() {
           {/* Filter buttons */}
           <div className="flex flex-nowrap gap-4 items-center mb-8 mt-4 w-full overflow-auto noscrollbar">
             <button
-              className={`py-1 px-4 text-sm rounded-full transition-all ${filter === "complete" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
-              onClick={() => handleFilterChange("true")}
+              className={`py-1 px-4 text-sm rounded-full transition-all ${filter === "completed" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
+              onClick={() => handleFilterChange("completed")}
             >
               Complete
             </button>
             <button
-              className={`py-1 px-4 text-sm rounded-full transition-all ${filter === "incomplete" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
-              onClick={() => handleFilterChange("false")}
+              className={`py-1 px-4 text-sm rounded-full transition-all ${filter === "incompleted" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
+              onClick={() => handleFilterChange("incompleted")}
             >
               Incomplete
+            </button>
+            <button
+              className={`py-1 px-4 text-sm rounded-full transition-all ${filter === "starred" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
+              onClick={() => handleFilterChange("starred")}
+            >
+              Starred
             </button>
             <button
               className="text-red-500 hover:text-red-400 cursor-pointer text-sm whitespace-nowrap"
