@@ -29,7 +29,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
   const [inputType, setInputType] = useState<{
     type: string;
     prevValue: string;
-    id: number;
+    id: number | null;
   } | null>(null);
   const { sendRequest: updateTaskRequest, loading: updateTaskLoading } =
     useApi();
@@ -63,6 +63,10 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       toast.error("Invalid Task");
       return;
     }
+    if (!notesValue || notesValue.trim().length < 2) {
+      toast.error("Invalid Note");
+      return;
+    }
     if (inputType && inputType.type && inputType.type == "noteEdit") {
       if (inputType.prevValue.trim() == notesValue.trim()) {
         toast.error("No Modification done");
@@ -88,6 +92,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       }
       return;
     }
+    setInputType({ type: "newNote", prevValue: notesValue, id: null });
     noteCreateRequest(`tasks/${id}/note`, "PATCH", { note: notesValue }).then(
       (result) => {
         const data = result?.data as Data<Note> | undefined;
@@ -106,13 +111,13 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
   };
   const noteScrollRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (noteScrollRef.current) {
+    if (noteScrollRef.current && inputType && inputType.type == "newNote") {
       noteScrollRef.current.scrollTo({
         top: noteScrollRef.current.scrollHeight,
         behavior: "smooth",
       });
     }
-  }, [task.notes]);
+  }, [task.notes, inputType]);
   useEffect(() => {
     const expansion = async () => {
       if (taskInfo) {
@@ -140,7 +145,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
           <div className="min-w-fit flex gap-2 float-right">
             <CornerRightDown
               size={20}
-              className={`text-blue-500 cursor-pointer hover:scale-150 transition-all ${expand?'rotate-180 ':'rotate-y-180'}`}
+              className={`text-blue-500 cursor-pointer hover:scale-150 transition-all ${expand && taskInfo == "more" ? "rotate-180 " : "rotate-y-180"}`}
               onClick={() => {
                 setTaskInfo("more");
               }}
@@ -154,7 +159,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                 setTaskInfo("info");
               }}
             >
-             <title>Task Info</title>
+              <title>Task Info</title>
             </TbInfoOctagon>
             {updateTaskLoading && <div className="spinner"></div>}
             <button
@@ -231,7 +236,11 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                 className="w-full py-1 text-sm px-4 rounded-full border border-gray-600/20"
                 onChange={(e) => setNotesValue(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && !noteCreateLoading) {
+                  if (
+                    e.key === "Enter" &&
+                    !noteCreateLoading &&
+                    !noteEditLoading
+                  ) {
                     handleNotesCreate(task.id);
                   }
                 }}

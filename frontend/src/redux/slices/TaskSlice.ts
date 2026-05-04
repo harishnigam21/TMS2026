@@ -90,6 +90,25 @@ const TaskSlice = createSlice({
         };
       }
     },
+    markNote: (state, action: PayloadAction<Note>) => {
+      const index = state.tasks.findIndex(
+        (item) => item.id === action.payload.taskId,
+      );
+
+      if (index !== -1) {
+        state.tasks[index] = {
+          ...state.tasks[index],
+          updatedAt: action.payload.updatedAt,
+          notes: state.tasks[index].notes.map((item) => {
+            if (item.id == action.payload.id) {
+              return action.payload;
+            } else {
+              return item;
+            }
+          }),
+        };
+      }
+    },
   },
 });
 export const {
@@ -101,5 +120,6 @@ export const {
   addNote,
   updateNote,
   deleteNote,
+  markNote,
 } = TaskSlice.actions;
 export default TaskSlice.reducer;

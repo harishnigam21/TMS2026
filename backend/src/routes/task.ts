@@ -7,6 +7,8 @@ import {
   addNote,
   editNote,
   deleteNote,
+  doneNote,
+  unDoneNote,
 } from "../controllers/task";
 
 import { authenticate } from "../middlewares/auth";
@@ -19,6 +21,8 @@ router.patch("/:id/toggle", authenticate, updateTask);
 router.patch("/:id/note", authenticate, addNote);
 router.post("/:tid/note/:nid/edit", authenticate, editNote);
 router.delete("/:tid/note/:nid/delete", authenticate, deleteNote);
+router.patch("/:tid/note/:nid/mark-done", authenticate, doneNote);
+router.patch("/:tid/note/:nid/mark-undone", authenticate, unDoneNote);
 router.delete("/:id", authenticate, deleteTask);
 
 export default router;

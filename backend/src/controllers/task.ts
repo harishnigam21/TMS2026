@@ -288,3 +288,94 @@ export const deleteNote = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+export const doneNote = async (req: AuthRequest, res: Response) => {
+  try {
+    const taskId = Number(req.params.tid);
+    const noteId = Number(req.params.nid);
+    const userId = Number(req.userId);
+    const markNote = await prisma.$transaction(async (tx) => {
+      const note = await tx.note.findUnique({
+        where: { id: noteId, taskId, task: { userId } },
+        include: {
+          task: true,
+        },
+      });
+
+      if (!note) {
+        throw new Error("Note not found");
+      }
+      if (note?.task.completed) {
+        return res.status(409).json({
+          message:
+            "Looks like your Task has been completed, make it not complete to mark notes",
+        });
+      }
+
+      const Mnote = tx.note.update({
+        where: { id: noteId },
+        data: { completed: true },
+      });
+      await tx.task.update({
+        where: { id: taskId },
+        data: { updatedAt: new Date() },
+      });
+      return Mnote;
+    });
+
+    return res.status(200).json({
+      message: "Note marked successfully",
+      data: markNote,
+    });
+  } catch (error: any) {
+    console.error("Error from doneNote controller", error);
+    if (error.message == "Note not found") {
+      return res.status(404).json({ message: "Note not found" });
+    }
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+export const unDoneNote = async (req: AuthRequest, res: Response) => {
+  try {
+    const taskId = Number(req.params.tid);
+    const noteId = Number(req.params.nid);
+    const userId = Number(req.userId);
+    const markNote = await prisma.$transaction(async (tx) => {
+      const note = await tx.note.findUnique({
+        where: { id: noteId, taskId, task: { userId } },
+        include: {
+          task: true,
+        },
+      });
+      if (!note) {
+        throw new Error("Note not found");
+      }
+      if (note?.task.completed) {
+        return res.status(409).json({
+          message:
+            "Looks like your Task has been completed, make it not complete to mark notes",
+        });
+      }
+
+      const Mnote = tx.note.update({
+        where: { id: noteId },
+        data: { completed: false },
+      });
+      await tx.task.update({
+        where: { id: taskId },
+        data: { updatedAt: new Date() },
+      });
+      return Mnote;
+    });
+
+    return res.status(200).json({
+      message: "Note marked successfully",
+      data: markNote,
+    });
+  } catch (error: any) {
+    console.error("Error from unDoneNote controller", error);
+    if (error.message == "Note not found") {
+      return res.status(404).json({ message: "Note not found" });
+    }
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
