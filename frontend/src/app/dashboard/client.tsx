@@ -10,14 +10,11 @@ import { Data } from "@/types/data";
 import { Task } from "@/types/task";
 import toast from "react-hot-toast";
 import TaskCard from "./Task";
-import { FaCaretLeft, FaCaretRight } from "react-icons/fa6";
 import { useSearchParams, useRouter } from "next/navigation";
-import { IoMdAdd, IoMdLogOut } from "react-icons/io";
-import { IoHome } from "react-icons/io5";
-import { CiSearch } from "react-icons/ci";
 import DashboardSkeleton from "./skeleton";
 import { User } from "@/types/user";
 import { setLoginStatus, setUser } from "@/redux/slices/UserSlice";
+import { ChevronLeft, ChevronRight, House, LogOut, Plus, Search } from "lucide-react";
 
 export default function Dashboard() {
   const tasks = useSelector((state: RootState) => state.task.tasks);
@@ -188,7 +185,7 @@ export default function Dashboard() {
     <section className="max-w-screen min-h-screen bg-linear-to-br from-gray-900 via-black to-gray-900 text-white box-border">
       <article className="max-w-4xl p-4 m-auto">
         <div className="flex justify-between items-center mb-6 w-full fixed top-0 right-0 p-4 z-10 backdrop-blur-3xl">
-          <IoHome
+          <House
             className="text-4xl text-amber-900 cursor-pointer "
             onClick={() => router.push("/")}
           />
@@ -197,24 +194,23 @@ export default function Dashboard() {
             {logoutLoading ? (
               <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
             ) : (
-              <IoMdLogOut
-                title="logout"
+              <LogOut
                 className="text-4xl text-blue-600 hover:text-blue-400 transition-colors"
                 onClick={handleLogout}
-              />
+              >
+                <title>Logout</title>
+              </LogOut>
             )}
           </div>
         </div>
-
-        <h1 className="text-3xl font-bold mb-6 mt-20 text-center">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium font-serif mb-6 mt-20 py-8 text-center">
           Task Dashboard
         </h1>
-
         {/* Add and Search Task */}
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex gap-2 mb-2 w-full">
-            <div className="flex items-center justify-center w-10">
-              <CiSearch className="text-3xl text-gray-400" />
+        <div className="flex flex-col min-[480]:flex-row justify-between gap-4">
+          <div className="flex flex-row-reverse min-[480]:flex-row gap-2 mb-2 w-full">
+            <div className="flex items-center justify-center min-w-10 h-10">
+              <Search className="text-3xl text-gray-400" />
             </div>
             <input
               type="search"
@@ -243,91 +239,92 @@ export default function Dashboard() {
               {createTaskLoading ? (
                 <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
               ) : (
-                <IoMdAdd className="text-3xl" />
+                <Plus className="text-3xl" />
               )}
             </button>
           </div>
         </div>
+        <article className="max-w-3xl m-auto">
+          {/* Filter buttons */}
+          <div className="flex flex-nowrap gap-4 items-center mb-8 mt-4 w-full overflow-auto noscrollbar">
+            <button
+              className={`py-1 px-4 text-sm rounded-full transition-all ${filter === "complete" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
+              onClick={() => handleFilterChange("true")}
+            >
+              Complete
+            </button>
+            <button
+              className={`py-1 px-4 text-sm rounded-full transition-all ${filter === "incomplete" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
+              onClick={() => handleFilterChange("false")}
+            >
+              Incomplete
+            </button>
+            <button
+              className="text-red-500 hover:text-red-400 cursor-pointer text-sm whitespace-nowrap"
+              onClick={() => handleFilterChange(null)}
+            >
+              Clear Filters
+            </button>
+          </div>
 
-        {/* Filter buttons */}
-        <div className="flex flex-wrap gap-4 items-center mb-8 mt-4">
-          <button
-            className={`py-1 px-4 text-sm rounded-full transition-all ${filter === "complete" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
-            onClick={() => handleFilterChange("true")}
-          >
-            Complete
-          </button>
-          <button
-            className={`py-1 px-4 text-sm rounded-full transition-all ${filter === "incomplete" ? "bg-green-500 text-black font-bold" : "bg-white text-black font-bold"} cursor-pointer`}
-            onClick={() => handleFilterChange("false")}
-          >
-            Incomplete
-          </button>
-          <button
-            className="text-red-500 hover:text-red-400 cursor-pointer text-sm"
-            onClick={() => handleFilterChange(null)}
-          >
-            Clear Filters
-          </button>
-        </div>
-
-        {/* Task List */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {getTaskLoading ? (
-            Array.from({ length: 9 }).map((_, i) => (
-              <div
-                key={`task/skelton/${i}`}
-                className="w-full h-20 bg-gray-700 rounded-xl animate-pulse"
-              ></div>
-            ))
-          ) : tasks.length > 0 ? (
-            tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                deleteTaskLoading={deleteTaskLoading}
-                deleteTheTask={deleteTheTask}
-              />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-10 bg-gray-800/50 rounded-lg">
-              <strong className="text-red-400">No Tasks Found!</strong>
-            </div>
-          )}
-        </div>
-
-        {/* Pagination */}
-        {pagination && pagination.totalPages > 1 && !getTaskLoading && (
-          <div className="flex justify-center items-center gap-4 mt-10">
-            {pagination.thisPage > 1 && (
-              <FaCaretLeft
-                onClick={() => changePage(pagination.thisPage - 1)}
-                className="cursor-pointer text-2xl hover:text-blue-500"
-              />
-            )}
-            <div className="flex gap-2 overflow-x-auto px-2">
-              {pageNumbers.map((i) => (
-                <button
-                  key={i}
-                  onClick={() => changePage(i)}
-                  className={`px-3 py-1 min-w-8.75 cursor-pointer rounded border transition-colors ${
-                    pagination.thisPage === i
-                      ? "bg-blue-600 border-blue-600 text-white"
-                      : "bg-gray-800 border-gray-700 hover:bg-gray-700"
-                  }`}
-                >
-                  {i}
-                </button>
-              ))}
-            </div>
-            {pagination.thisPage < pagination.totalPages && (
-              <FaCaretRight
-                onClick={() => changePage(pagination.thisPage + 1)}
-                className="cursor-pointer text-2xl hover:text-blue-500"
-              />
+          {/* Task List */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {getTaskLoading ? (
+              Array.from({ length: 9 }).map((_, i) => (
+                <div
+                  key={`task/skelton/${i}`}
+                  className="w-full h-20 bg-gray-700 rounded-xl animate-pulse"
+                ></div>
+              ))
+            ) : tasks.length > 0 ? (
+              tasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  deleteTaskLoading={deleteTaskLoading}
+                  deleteTheTask={deleteTheTask}
+                />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-10 bg-gray-800/50 rounded-lg">
+                <strong className="text-red-400">No Tasks Found!</strong>
+              </div>
             )}
           </div>
-        )}
+
+          {/* Pagination */}
+          {pagination && pagination.totalPages > 1 && !getTaskLoading && (
+            <div className="flex justify-center items-center gap-4 mt-10">
+              {pagination.thisPage > 1 && (
+                <ChevronLeft
+                  onClick={() => changePage(pagination.thisPage - 1)}
+                  className="cursor-pointer text-2xl hover:text-blue-500"
+                />
+              )}
+              <div className="flex gap-2 overflow-x-auto px-2">
+                {pageNumbers.map((i) => (
+                  <button
+                    key={i}
+                    onClick={() => changePage(i)}
+                    className={`px-3 py-1 min-w-8.75 cursor-pointer rounded border transition-colors ${
+                      pagination.thisPage === i
+                        ? "bg-blue-600 border-blue-600 text-white"
+                        : "bg-gray-800 border-gray-700 hover:bg-gray-700"
+                    }`}
+                  >
+                    {i}
+                  </button>
+                ))}
+              </div>
+              {pagination.thisPage < pagination.totalPages && (
+                <ChevronRight
+                  onClick={() => changePage(pagination.thisPage + 1)}
+                  className="cursor-pointer text-2xl hover:text-blue-500"
+                />
+              )}
+            </div>
+          )}
+        </article>
       </article>
     </section>
   ) : (

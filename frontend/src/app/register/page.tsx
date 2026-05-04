@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import useApi from "@/hooks/useApi";
 import toast from "react-hot-toast";
 import { Data } from "@/types/data";
-import { IoHome } from "react-icons/io5";
+import { House } from "lucide-react";
 
 export default function Register() {
   const { sendRequest, loading } = useApi();
@@ -83,7 +83,7 @@ export default function Register() {
   };
   return (
     <div className="min-h-screen bg-linear-to-br from-black via-gray-900 to-black text-white flex justify-center-safe items-center-safe p-4">
-      <IoHome
+      <House
         className="text-4xl text-amber-900 cursor-pointer absolute top-2 left-2"
         onClick={() => router.push("/")}
       />

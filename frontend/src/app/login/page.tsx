@@ -8,7 +8,7 @@ import { Data } from "@/types/data";
 import { setLoginStatus, setUser } from "@/redux/slices/UserSlice";
 import { User } from "@/types/user";
 import { AppDispatch } from "@/redux/Store";
-import { IoHome } from "react-icons/io5";
+import { House } from "lucide-react";
 
 export default function Login() {
   const { sendRequest, loading } = useApi();
@@ -79,7 +79,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-black via-gray-900 to-black text-white flex justify-center-safe items-center-safe p-4">
-      <IoHome
+      <House
         className="text-4xl text-amber-900 cursor-pointer absolute top-2 left-2"
         onClick={() => router.push("/")}
       />

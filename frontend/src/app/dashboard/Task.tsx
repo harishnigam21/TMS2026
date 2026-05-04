@@ -5,14 +5,11 @@ import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { Note, Task } from "@/types/task";
 import { completeDate, getDaysBetween } from "@/utils/getDate";
-import { AiFillDelete } from "react-icons/ai";
 import { useElementHeight } from "@/hooks/useElementHeight";
 import React, { useEffect, useRef, useState } from "react";
-import { IoMdSend } from "react-icons/io";
 import { AppDispatch } from "@/redux/Store";
-import { TbInfoOctagon } from "react-icons/tb";
 import Notes from "@/components/Notes";
-import { CornerRightDown } from "lucide-react";
+import { BadgeInfo, CornerRightDown, SendHorizonal, Trash } from "lucide-react";
 
 type taskCardProps = {
   task: Task;
@@ -155,7 +152,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
             >
               <title>Expand</title>
             </CornerRightDown>
-            <TbInfoOctagon
+            <BadgeInfo
               size={20}
               className="text-blue-500 cursor-pointer hover:scale-150 transition-all"
               onClick={() => {
@@ -163,7 +160,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
               }}
             >
               <title>Task Info</title>
-            </TbInfoOctagon>
+            </BadgeInfo>
             {updateTaskLoading && <div className="spinner"></div>}
             <button
               disabled={updateTaskLoading}
@@ -283,7 +280,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
               {noteCreateLoading || noteEditLoading ? (
                 <span className="spinner"></span>
               ) : (
-                <IoMdSend
+                <SendHorizonal
                   className="cursor-pointer text-blue-700 text-xl"
                   onClick={() => handleNotesCreate(task.id)}
                 />
@@ -300,7 +297,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
           className="text-red-500 flex items-center gap-2 cursor-pointer"
           onClick={() => deleteTheTask(task.id)}
         >
-          <AiFillDelete
+          <Trash
             className={`text-xl text-red-500 ${deleteTaskLoading ? "animate-ping duration-100" : ""}`}
           />
         </button>
