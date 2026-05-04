@@ -1,6 +1,6 @@
 export default function DashboardSkeleton() {
   return (
-    <div className="p-6 animate-pulse">
+    <div className="p-6 animate-pulse mt-10">
       {/* Title */}
       <div className="flex justify-center mb-6">
         <div className="h-8 w-60 bg-gray-700 rounded"></div>
@@ -21,7 +21,7 @@ export default function DashboardSkeleton() {
       </div>
 
       {/* Task Cards Grid */}
-      <div className="grid grid-cols-3 gap-4 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
         {Array.from({ length: 9 }).map((_, i) => (
           <div
             key={i}
