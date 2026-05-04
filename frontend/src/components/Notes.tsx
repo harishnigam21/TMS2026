@@ -26,6 +26,7 @@ export default function Notes({
   >;
 }) {
   const [showOptions, setShowOptions] = useState<boolean>(false);
+  const [noteExpand, setNoteExpand] = useState<boolean>(false);
   const handleEdit = () => {
     setNotesValue(note.note);
     setInputType({ type: "noteEdit", prevValue: note.note, id: note.id });
@@ -98,13 +99,18 @@ export default function Notes({
   };
   return (
     <div
-      className={`relative flex items-center-safe p-2 ${showOptions ? "bg-gray-50/10" : ""} rounded-full`}
+      className={`relative flex items-center-safe p-2 ${showOptions ? "bg-gray-50/10" : ""} rounded-xl`}
       onMouseLeave={() => setShowOptions(false)}
       onMouseEnter={() => setShowOptions((prev) => !prev)}
     >
-      <div className="flex gap-2 cursor-pointer">
+      <div
+        className="flex gap-2 cursor-pointer w-full"
+        onClick={() => setNoteExpand((prev) => !prev)}
+      >
         <small>{index + 1}.</small>
-        <small>{note.note}.</small>
+        <small className={`${noteExpand ? "" : "line-clamp-1"} w-full wrap-anywhere`}>
+          {note.note}.
+        </small>
       </div>
       <div
         className={`grid grid-cols-4 place-items-center place-self-center rounded-full absolute right-0 text-sm z-10 bg-black max-w-0 overflow-hidden ${showOptions ? "max-w-40 " : "max-w-0 p-0"} transition-all duration-500`}

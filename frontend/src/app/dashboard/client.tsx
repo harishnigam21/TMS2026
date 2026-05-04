@@ -274,9 +274,12 @@ export default function Dashboard() {
         {/* Task List */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {getTaskLoading ? (
-            <div className="col-span-full flex justify-center py-10">
-              <Loading />
-            </div>
+            Array.from({ length: 9 }).map((_, i) => (
+              <div
+                key={`task/skelton/${i}`}
+                className="w-full h-20 bg-gray-700 rounded-xl animate-pulse"
+              ></div>
+            ))
           ) : tasks.length > 0 ? (
             tasks.map((task) => (
               <TaskCard

@@ -24,6 +24,9 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
   const [ref, height] = useElementHeight();
   const [expand, setExpand] = useState<boolean>(false);
   const [taskInfo, setTaskInfo] = useState<string | null>(null);
+  const [filterSelected, setFilterSelected] = useState<
+    "all" | "done" | "undone"
+  >("all");
   const dispatch = useDispatch<AppDispatch>();
   const [notesValue, setNotesValue] = useState<string>("");
   const [inputType, setInputType] = useState<{
@@ -202,27 +205,59 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
         </div>
       ) : taskInfo == "more" ? (
         <div className="flex flex-col gap-2 grow justify-end-safe">
-          <small className="text-green-500">
-            Notes :{" "}
-            {!task.notes ||
-              (task.notes.length == 0 && (
-                <span className="text-red-500">No notes !</span>
-              ))}
-          </small>
+          <div className="text-green-500 flex flex-nowrap gap-2 items-center">
+            <b className="text-sm whitespace-nowrap">Notes :</b>
+            {task.notes && task.notes.length > 0 ? (
+              <div className="flex items-center gap-2 flex-nowrap w-full overflow-x-auto noscrollbar">
+                <button
+                  className={`rounded-full py-0.5 px-3 ${filterSelected == "all" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 text-xs font-semibold transition-all cursor-pointer`}
+                  onClick={() => setFilterSelected("all")}
+                >
+                  All
+                </button>
+                <button
+                  className={`rounded-full py-0.5 px-3 ${filterSelected == "done" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 text-xs font-semibold transition-all cursor-pointer`}
+                  onClick={() => setFilterSelected("done")}
+                >
+                  Done
+                </button>
+                <button
+                  className={`rounded-full py-0.5 px-3 ${filterSelected == "undone" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 text-xs font-semibold transition-all cursor-pointer`}
+                  onClick={() => setFilterSelected("undone")}
+                >
+                  UnDone
+                </button>
+              </div>
+            ) : (
+              <small className="text-red-500">No notes !</small>
+            )}
+          </div>
           {task.notes && task.notes.length > 0 && (
             <div
               ref={noteScrollRef}
               className="flex flex-col max-h-40 overflow-auto manual-scroll bg-gray-500/20 p-2 rounded-xl"
             >
-              {task.notes.map((note, index) => (
-                <Notes
-                  key={`task/notes/${index}`}
-                  note={note}
-                  index={index}
-                  setNotesValue={setNotesValue}
-                  setInputType={setInputType}
-                />
-              ))}
+              {task.notes
+                .filter((item) => {
+                  if (filterSelected == "all") {
+                    return true;
+                  }
+                  if (filterSelected == "done") {
+                    return item.completed;
+                  }
+                  if (filterSelected == "undone") {
+                    return !item.completed;
+                  }
+                })
+                .map((note, index) => (
+                  <Notes
+                    key={`task/notes/${index}`}
+                    note={note}
+                    index={index}
+                    setNotesValue={setNotesValue}
+                    setInputType={setInputType}
+                  />
+                ))}
             </div>
           )}
           {!task.completed && (
