@@ -10,6 +10,7 @@ export interface Task {
   id: number;
   title: string;
   completed: boolean;
+  star: boolean;
   description: string;
   notes: Note[];
   createdAt: string;

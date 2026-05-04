@@ -145,7 +145,37 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+export const starTask = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = Number(req.params.id);
 
+    const starTask = await prisma.$transaction(async (tx) => {
+      const task = await tx.task.findUnique({
+        where: { id, userId: req.userId },
+      });
+
+      return tx.task.update({
+        where: { id, userId: req.userId },
+        data: {
+          star: !task!.star,
+        },
+      });
+    });
+    return res.status(200).json({
+      message: `${starTask.star ? "Star Added" : "Star Removed"}`,
+      data: starTask,
+    });
+  } catch (error) {
+    console.error("Error from starTask controller", error);
+    const prismaError = handlePrismaError(error, "Task");
+    if (prismaError) {
+      return res.status(prismaError.status).json({
+        message: prismaError.message,
+      });
+    }
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 export const deleteTask = async (req: AuthRequest, res: Response) => {
   const id = Number(req.params.id);
   try {

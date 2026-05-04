@@ -35,6 +35,19 @@ const TaskSlice = createSlice({
         };
       }
     },
+    starTask: (state, action: PayloadAction<Task>) => {
+      const index = state.tasks.findIndex(
+        (item) => item.id === action.payload.id,
+      );
+
+      if (index !== -1) {
+        state.tasks[index] = {
+          ...state.tasks[index],
+          star: action.payload.star,
+          updatedAt: action.payload.updatedAt,
+        };
+      }
+    },
     deleteTask: (state, action: PayloadAction<number>) => {
       state.tasks = state.tasks.filter((item) => item.id != action.payload);
     },
@@ -115,6 +128,7 @@ export const {
   setTask,
   addTask,
   updateTask,
+  starTask,
   deleteTask,
   setPagination,
   addNote,
