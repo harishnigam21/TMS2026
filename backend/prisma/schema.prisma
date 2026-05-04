@@ -23,30 +23,24 @@ model User {
 model Task {
   id          Int     @id @default(autoincrement())
   title       String
-  description String  @default("")
+  description String  @db.Text
   completed   Boolean @default(false)
-
+  star        Boolean @default(false)
   userId      Int
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   notes       Note[]
-
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
   @@index([userId, createdAt, id])
 }
 
 model Note {
   id        Int     @id @default(autoincrement())
-  note      String
+  note      String  @db.Text
   completed Boolean @default(false)
-
   taskId    Int
   task      Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([taskId])
 }
