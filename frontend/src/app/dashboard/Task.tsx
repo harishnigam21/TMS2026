@@ -12,6 +12,7 @@ import { IoMdSend } from "react-icons/io";
 import { AppDispatch } from "@/redux/Store";
 import { TbInfoOctagon } from "react-icons/tb";
 import Notes from "@/components/Notes";
+import { CornerRightDown } from "lucide-react";
 
 type taskCardProps = {
   task: Task;
@@ -22,7 +23,7 @@ type taskCardProps = {
 function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
   const [ref, height] = useElementHeight();
   const [expand, setExpand] = useState<boolean>(false);
-  const [taskInfo, setTaskInfo] = useState<boolean>(false);
+  const [taskInfo, setTaskInfo] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
   const [notesValue, setNotesValue] = useState<string>("");
   const [inputType, setInputType] = useState<{
@@ -112,13 +113,22 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       });
     }
   }, [task.notes]);
+  useEffect(() => {
+    const expansion = async () => {
+      if (taskInfo) {
+        setExpand(true);
+      } else {
+        setExpand(false);
+      }
+    };
+    expansion();
+  }, [taskInfo]);
   return (
     <div
       style={{ maxHeight: `${expand ? 500 : height + 24}px` }}
       className="flex flex-col justify-between gap-2 border p-3 rounded-xl overflow-hidden transition-all duration-200"
       onMouseLeave={() => {
-        setExpand(false);
-        setTaskInfo(false);
+        setTaskInfo(null);
       }}
     >
       <div ref={ref}>
@@ -128,22 +138,24 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
           } m-auto  gap-2`}
         >
           <div className="min-w-fit flex gap-2 float-right">
-            <button>
-              <TbInfoOctagon
-                className="text-blue-500 cursor-pointer hover:scale-120 transition-all"
-                onClick={() => {
-                  setTaskInfo((prev) => {
-                    if (prev) {
-                      setExpand(false);
-                      return false;
-                    } else {
-                      setExpand(true);
-                      return true;
-                    }
-                  });
-                }}
-              />
-            </button>
+            <CornerRightDown
+              size={20}
+              className={`text-blue-500 cursor-pointer hover:scale-150 transition-all ${expand?'rotate-180 ':'rotate-y-180'}`}
+              onClick={() => {
+                setTaskInfo("more");
+              }}
+            >
+              <title>Expand</title>
+            </CornerRightDown>
+            <TbInfoOctagon
+              size={20}
+              className="text-blue-500 cursor-pointer hover:scale-150 transition-all"
+              onClick={() => {
+                setTaskInfo("info");
+              }}
+            >
+             <title>Task Info</title>
+            </TbInfoOctagon>
             {updateTaskLoading && <div className="spinner"></div>}
             <button
               disabled={updateTaskLoading}
@@ -152,18 +164,11 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       ${task.completed ? "bg-green-500" : "bg-gray-500"}`}
             >
               <div
-                className={`bg-white w-3 h-3 rounded-full shadow-md transform transition
-        ${task.completed ? "translate-x-4" : "translate-x-0"}`}
-              />
+                className={`bg-white w-3 h-3 rounded-full shadow-md transform transition ${task.completed ? "translate-x-4" : "translate-x-0"}`}
+              ></div>
             </button>
           </div>
-          <p
-            className={`${expand ? "" : "line-clamp-1"} cursor-pointer`}
-            onClick={() => {
-              setExpand((prev) => !prev);
-              setTaskInfo(false);
-            }}
-          >
+          <p className={`${expand ? "" : "line-clamp-1"} cursor-pointer`}>
             {task.title}
           </p>
         </div>
@@ -172,7 +177,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
         </small>
       </div>
       {/* //notes */}
-      {taskInfo ? (
+      {taskInfo == "info" ? (
         <div>
           <strong className="text-md text-blue-500 opacity-100 py-3">
             Task Info :
@@ -190,7 +195,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
             </small>
           </div>
         </div>
-      ) : (
+      ) : taskInfo == "more" ? (
         <div className="flex flex-col gap-2 grow justify-end-safe">
           <small className="text-green-500">
             Notes :{" "}
@@ -242,6 +247,8 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
             </div>
           )}
         </div>
+      ) : (
+        <></>
       )}
       <div className="flex gap-4 pt-4">
         <button
