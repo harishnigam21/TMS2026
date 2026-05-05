@@ -10,20 +10,10 @@ import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { Note, Task } from "@/types/task";
 import { completeDate, getDaysBetween } from "@/utils/getDate";
-import { useElementHeight } from "@/hooks/useElementHeight";
 import React, { useEffect, useRef, useState } from "react";
 import { AppDispatch } from "@/redux/Store";
 import Notes from "@/components/Notes";
-import {
-  BadgeInfo,
-  CornerRightDown,
-  Expand,
-  SendHorizonal,
-  Star,
-  Trash,
-  X,
-} from "lucide-react";
-import ExpandTask from "@/components/ExpandTask";
+import { BadgeInfo, SendHorizonal, Star, Trash } from "lucide-react";
 
 type taskCardProps = {
   task: Task;
@@ -31,11 +21,8 @@ type taskCardProps = {
   deleteTheTask: (id: number) => void;
 };
 
-function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
-  const [ref, height] = useElementHeight();
-  const [expand, setExpand] = useState<boolean>(false);
-  const [fullScreen, setFullScreen] = useState<boolean>(false);
-  const [taskInfo, setTaskInfo] = useState<string | null>(null);
+function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
+  const [taskInfo, setTaskInfo] = useState<string>("more");
   const [filterSelected, setFilterSelected] = useState<
     "all" | "done" | "undone"
   >("all");
@@ -153,66 +140,31 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       });
     }
   }, [task.notes, inputType]);
-  useEffect(() => {
-    const expansion = async () => {
-      if (taskInfo) {
-        setExpand(true);
-      } else {
-        setExpand(false);
-      }
-    };
-    expansion();
-  }, [taskInfo]);
-  if (fullScreen && task) {
-    return (
-      <article className="fixed top-0 left-0 z-10 w-full h-full backdrop-blur-xl flex justify-center-safe items-center-safe p-2">
-        <X
-          size={30}
-          color="red"
-          strokeWidth={5}
-          className="fixed top-1 right-1 cursor-pointer"
-          onClick={() => setFullScreen(false)}
-        >
-          <title>Close Task</title>
-        </X>
-        <ExpandTask
-          task={task}
-          deleteTheTask={deleteTheTask}
-          deleteTaskLoading={deleteTaskLoading}
-        />
-      </article>
-    );
-  }
   return (
-    <article className="relative flex flex-col">
-      <div
-        style={{ maxHeight: `${expand ? 500 : height + 24}px` }}
-        className="flex relative flex-col justify-between gap-2 border p-3 rounded-xl overflow-hidden transition-all duration-200"
-        onMouseLeave={() => {
-          setTaskInfo(null);
-        }}
-      >
-        <div ref={ref}>
+    <article className="relative w-full sm:w-[75%] lg:w-[60%] xl:w-1/2 flex flex-col bg-black">
+      <div className="flex relative flex-col justify-between gap-2 border p-6 rounded-xl overflow-hidden transition-all duration-200">
+        <div>
           <div
             className={` ${
               task.completed ? "line-through text-gray-400" : ""
             } m-auto  gap-2`}
           >
-            <div className="min-w-fit flex gap-2 float-right">
-              <CornerRightDown
-                size={20}
-                className={`text-blue-500 cursor-pointer hover:scale-150 transition-all ${expand && taskInfo == "more" ? "rotate-180 " : "rotate-y-180"}`}
-                onClick={() => {
-                  setTaskInfo("more");
-                }}
+            <div className="min-w-fit flex items-center gap-2 float-right">
+              <Star
+                className={`cursor-pointer transition-all ${starLoading ? "animate-spin" : "animate-none"}`}
+                color="white"
+                size={30}
+                strokeWidth={1.5}
+                fill={task.star ? "yellow" : "black"}
+                onClick={() => handleTaskStar(task)}
               >
-                <title>Expand</title>
-              </CornerRightDown>
+                <title>Star Your Task</title>
+              </Star>
               <BadgeInfo
-                size={20}
+                size={30}
                 className="text-blue-500 cursor-pointer hover:scale-150 transition-all"
                 onClick={() => {
-                  setTaskInfo("info");
+                  setTaskInfo((prev) => (prev == "more" ? "info" : "more"));
                 }}
               >
                 <title>Task Info</title>
@@ -221,17 +173,17 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
               <button
                 disabled={updateTaskLoading}
                 onClick={() => updateTheTask(task.id)}
-                className={`w-8 h-4 flex items-center cursor-pointer rounded-full p-1 transition
+                className={`w-12 h-6 flex items-center cursor-pointer rounded-full p-1 transition
       ${task.completed ? "bg-green-500" : "bg-gray-500"}`}
               >
                 <div
-                  className={`bg-white w-3 h-3 rounded-full shadow-md transform transition ${task.completed ? "translate-x-4" : "translate-x-0"}`}
+                  className={`bg-white w-4 h-4 rounded-full shadow-md transform transition ${task.completed ? "translate-x-6" : "translate-x-0"}`}
                 ></div>
               </button>
             </div>
-            <p className={`${expand ? "" : "line-clamp-1"} cursor-pointer`}>
+            <h2 className="text-3xl md:text-4xl font-serif font-medium">
               {task.title}
-            </p>
+            </h2>
           </div>
           <small className="text-xs opacity-40">
             {getDaysBetween(task.createdAt)}
@@ -240,10 +192,10 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
         {/* //notes */}
         {taskInfo == "info" ? (
           <div>
-            <strong className="text-md text-blue-500 opacity-100 py-3">
+            <strong className="text-2xl text-blue-500 opacity-100 py-3">
               Task Info :
             </strong>
-            <div className="opacity-40 flex flex-col">
+            <div className="opacity-40 flex flex-col gap-2 text-2xl pl-2">
               <small>Created At : {completeDate(task.createdAt)}</small>
               <small>Last Updated At : {completeDate(task.updatedAt)}</small>
               <small>
@@ -259,23 +211,23 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
         ) : taskInfo == "more" ? (
           <div className="flex flex-col gap-2 grow justify-end-safe">
             <div className="text-green-500 flex flex-wrap gap-2 items-center">
-              <b className="text-sm whitespace-nowrap">Notes :</b>
+              <b className="text-2xl whitespace-nowrap">Notes :</b>
               {task.notes && task.notes.length > 0 ? (
                 <div className="flex items-center py-3 gap-2 flex-nowrap w-full overflow-x-auto noscrollbar basis-full">
                   <button
-                    className={`rounded-full py-0.5 px-3 ${filterSelected == "all" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 text-xs font-semibold transition-all cursor-pointer`}
+                    className={`rounded-full py-0.5 px-3 ${filterSelected == "all" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 font-semibold transition-all cursor-pointer`}
                     onClick={() => setFilterSelected("all")}
                   >
                     All
                   </button>
                   <button
-                    className={`rounded-full py-0.5 px-3 ${filterSelected == "done" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 text-xs font-semibold transition-all cursor-pointer`}
+                    className={`rounded-full py-0.5 px-3 ${filterSelected == "done" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 font-semibold transition-all cursor-pointer`}
                     onClick={() => setFilterSelected("done")}
                   >
                     Done
                   </button>
                   <button
-                    className={`rounded-full py-0.5 px-3 ${filterSelected == "undone" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 text-xs font-semibold transition-all cursor-pointer`}
+                    className={`rounded-full py-0.5 px-3 ${filterSelected == "undone" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 font-semibold transition-all cursor-pointer`}
                     onClick={() => setFilterSelected("undone")}
                   >
                     UnDone
@@ -315,13 +267,12 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
             )}
             {!task.completed && (
               <div className="flex gap-2 w-full items-center">
-                <input
-                  type="text"
+                <textarea
                   name="newNote"
                   id={`newNote/${task.id}`}
                   value={notesValue}
                   placeholder="Add Notes..."
-                  className="w-full py-1 text-sm px-4 rounded-full border border-gray-600/20"
+                  className="w-full py-1 text-sm px-4 border border-gray-600/20"
                   onChange={(e) => setNotesValue(e.target.value)}
                   onKeyDown={(e) => {
                     if (
@@ -337,6 +288,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                   <span className="spinner"></span>
                 ) : (
                   <SendHorizonal
+                  size={30}
                     className="cursor-pointer text-blue-700 text-xl"
                     onClick={() => handleNotesCreate(task.id)}
                   />
@@ -359,31 +311,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
           </button>
         </div>
       </div>
-      {/* Star icon */}
-      <div className="sticky flex justify-end-safe -mt-3.25 -mr-2 ">
-        <Star
-          className={`cursor-pointer transition-all ${starLoading ? "animate-spin" : "animate-none"}`}
-          color="white"
-          size={20}
-          strokeWidth={1.5}
-          fill={task.star ? "yellow" : "black"}
-          onClick={() => handleTaskStar(task)}
-        >
-          <title>Star Your Task</title>
-        </Star>
-      </div>
-      {/* Expand icon */}
-      <div className="absolute -top-2 self-center">
-        <Expand
-          className="cursor-pointer"
-          color="white"
-          size={20}
-          onClick={() => setFullScreen(true)}
-        >
-          <title>View Task in Full Screen</title>
-        </Expand>
-      </div>
     </article>
   );
 }
-export default React.memo(TaskCard);
+export default React.memo(ExpandTask);

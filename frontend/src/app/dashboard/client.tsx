@@ -192,7 +192,7 @@ export default function Dashboard() {
     <DashboardSkeleton />
   ) : user.loginStatus == "authenticated" ? (
     <section className="max-w-screen min-h-screen bg-linear-to-br from-gray-900 via-black to-gray-900 text-white box-border">
-      <article className="max-w-4xl p-4 m-auto">
+      <article className="max-w-5xl p-4 m-auto">
         <div className="flex justify-between items-center mb-6 w-full fixed top-0 right-0 p-4 z-10 backdrop-blur-3xl">
           <House
             className="text-4xl text-amber-900 cursor-pointer "
@@ -212,7 +212,7 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-        <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium font-serif mb-6 mt-20 py-8 text-center">
+        <h1 className="text-3xl xl:text-6xl font-medium font-serif mb-6 mt-15 lg:mt-20 lg:py-8 text-center">
           Task Dashboard
         </h1>
         {/* Add and Search Task */}
@@ -253,7 +253,7 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
-        <article className="max-w-3xl m-auto">
+        <article className="max-w-4xl m-auto">
           {/* Filter buttons */}
           <div className="flex flex-nowrap gap-4 items-center mb-8 mt-4 w-full overflow-auto noscrollbar">
             <button

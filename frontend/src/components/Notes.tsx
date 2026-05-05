@@ -4,10 +4,10 @@ import { AppDispatch } from "@/redux/Store";
 import { Data } from "@/types/data";
 import { Note } from "@/types/task";
 import { Check, Pencil, Trash, X } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
-
+import { useGesture } from "@use-gesture/react";
 export default function Notes({
   index,
   note,
@@ -97,23 +97,45 @@ export default function Notes({
       }
     });
   };
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const toggleOptions = useGesture({
+    onPointerDown: () => {
+      timerRef.current = setTimeout(() => {
+        setShowOptions((prev) => !prev);
+      }, 500);
+    },
+
+    onPointerUp: () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    },
+
+    onPointerMove: () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    },
+  });
   return (
     <div
-      className={`relative flex items-center-safe p-2 ${showOptions ? "bg-gray-50/10" : ""} rounded-xl`}
+      className={`relative flex p-2 ${showOptions ? "bg-gray-50/10" : ""} rounded-xl`}
       onMouseLeave={() => setShowOptions(false)}
-      onMouseEnter={() => setShowOptions((prev) => !prev)}
+      {...toggleOptions()}
     >
       <div
         className="flex gap-2 cursor-pointer w-full"
         onClick={() => setNoteExpand((prev) => !prev)}
       >
         <small>{index + 1}.</small>
-        <small className={`${noteExpand ? "" : "line-clamp-1"} w-full wrap-anywhere`}>
+        <small
+          className={`${noteExpand ? "" : "line-clamp-1"} w-full wrap-anywhere`}
+        >
           {note.note}.
         </small>
       </div>
       <div
-        className={`grid grid-cols-4 place-items-center place-self-center rounded-full absolute right-0 text-sm z-10 bg-black max-w-0 overflow-hidden ${showOptions ? "max-w-40 " : "max-w-0 p-0"} transition-all duration-500`}
+        className={`grid grid-cols-4 place-items-center rounded-full absolute right-0 top-0.5 text-sm z-10 bg-black max-w-0 overflow-hidden ${showOptions ? "max-w-40 " : "max-w-0 p-0"} transition-all duration-500`}
       >
         <div
           className={`hover:bg-gray-400/20 transition-all p-2`}
