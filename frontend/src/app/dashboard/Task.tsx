@@ -226,13 +226,15 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                   </div>
                 ))}
                 {task.noteCount > 5 && (
-                  <ChevronsDown
-                    className="self-center animate-bounce cursor-pointer"
-                    color="green"
-                    onClick={() => setFullScreen(true)}
-                  >
-                    <title>More</title>
-                  </ChevronsDown>
+                  <div className="flex justify-center items-center">
+                    <ChevronsDown
+                      className="animate-bounce cursor-pointer"
+                      color="green"
+                      onClick={() => setFullScreen(true)}
+                    >
+                      <title>More</title>
+                    </ChevronsDown>
+                  </div>
                 )}
               </div>
             )}
