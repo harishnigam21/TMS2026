@@ -3,13 +3,14 @@ import { deleteNote, markNote } from "@/redux/slices/TaskSlice";
 import { AppDispatch } from "@/redux/Store";
 import { Data } from "@/types/data";
 import { Note } from "@/types/task";
-import { Check, GripVertical, Pencil, Trash, X } from "lucide-react";
+import { Check, GripVertical, Info, Pencil, Trash, X } from "lucide-react";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { useGesture } from "@use-gesture/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { completeDate } from "@/utils/getDate";
 export default function Notes({
   index,
   note,
@@ -29,6 +30,7 @@ export default function Notes({
 }) {
   const [showOptions, setShowOptions] = useState<boolean>(false);
   const [noteExpand, setNoteExpand] = useState<boolean>(false);
+  const [noteInfo, setNoteInfo] = useState<boolean>(false);
   const handleEdit = () => {
     setNotesValue(note.note);
     setInputType({ type: "noteEdit", prevValue: note.note, id: note.id });
@@ -133,19 +135,62 @@ export default function Notes({
       ref={setNodeRef}
       style={style}
       className={`relative flex p-2 ${showOptions ? "bg-gray-50/10" : ""} rounded-xl border border-gray-500/30`}
-      onMouseLeave={() => setShowOptions(false)}
+      onMouseLeave={() => {
+        setNoteInfo(false);
+        setShowOptions(false);
+      }}
     >
-      <div
-        {...toggleOptions()}
-        className="flex gap-2 cursor-pointer w-full"
-        onClick={() => setNoteExpand((prev) => !prev)}
-      >
+      <div {...toggleOptions()} className="flex gap-2 cursor-pointer w-full">
         <small>{index + 1}.</small>
-        <small
-          className={`${noteExpand ? "" : "line-clamp-1"} w-full wrap-anywhere grow`}
+        <div
+          className={` w-full wrap-anywhere grow flex flex-col justify-start `}
         >
-          {note.note}.
-        </small>
+          <div
+            className={`${noteExpand ? "" : "line-clamp-1"} -mt-1`}
+            onClick={() => setNoteExpand((prev) => !prev)}
+          >
+            {note.note.split("\n").map((sn, i) => (
+              <small key={`full/sn/${i}`}>
+                {sn}
+                <br />
+              </small>
+            ))}
+          </div>
+          {noteInfo && (
+            <div className="flex flex-col">
+              <small className="font-bold text-blue-500">Info :</small>
+              <ol className="list-disc list-outside pl-6 text-xs">
+                <li className="text-gray-200/60">
+                  <span className="font-bold text-white/80">Created At :</span>
+                  {completeDate(note.createdAt)}
+                </li>
+                <li className="text-gray-200/60">
+                  <span className="font-bold text-white/80">Updated At : </span>
+                  {completeDate(note.updatedAt)}
+                </li>
+                <li className="text-gray-200/60">
+                  <span className="font-bold text-white/80">Status : </span>
+
+                  {note.completed ? (
+                    <span className="text-green-500">note completed</span>
+                  ) : (
+                    <span className="text-red-500">note incompleted</span>
+                  )}
+                </li>
+              </ol>
+            </div>
+          )}
+        </div>
+        <Info
+          color="blue"
+          size={20}
+          className="hover:scale-125 transition-all"
+          onClick={() => {
+            setNoteInfo((prev) => !prev);
+          }}
+        >
+          <title>get note info</title>
+        </Info>
         <div
           className="cursor-grab"
           style={{ touchAction: "none" }}

@@ -163,21 +163,26 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
         {/* //notes */}
         {taskInfo == "info" ? (
           <div>
-            <strong className="text-md text-blue-500 opacity-100 py-3">
-              Task Info :
-            </strong>
-            <div className="opacity-40 flex flex-col">
-              <small>Created At : {completeDate(task.createdAt)}</small>
-              <small>Last Updated At : {completeDate(task.updatedAt)}</small>
-              <small>
-                Status :{" "}
+            <small className="font-bold text-blue-500">Info :</small>
+            <ol className="list-disc list-outside pl-6 text-xs">
+              <li className="text-gray-200/60">
+                <span className="font-bold text-white/80">Created At :</span>
+                {completeDate(task.createdAt)}
+              </li>
+              <li className="text-gray-200/60">
+                <span className="font-bold text-white/80">Updated At : </span>
+                {completeDate(task.updatedAt)}
+              </li>
+              <li className="text-gray-200/60">
+                <span className="font-bold text-white/80">Status : </span>
+
                 {task.completed ? (
-                  <span className="text-green-500">completed</span>
+                  <span className="text-green-500">Task completed</span>
                 ) : (
-                  <span className="text-red-500">InComplete</span>
+                  <span className="text-red-500">Task incompleted</span>
                 )}
-              </small>
-            </div>
+              </li>
+            </ol>
           </div>
         ) : taskInfo == "more" ? (
           <div className="flex flex-col gap-2 grow justify-end-safe">
@@ -220,9 +225,54 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                     className="flex gap-2 cursor-pointer w-full"
                   >
                     <small>{index + 1}.</small>
-                    <small className={` w-full wrap-anywhere grow`}>
-                      {note.note}.
-                    </small>
+                    <div
+                      className={` w-full wrap-anywhere grow flex flex-col justify-start `}
+                    >
+                      <div className="-m-1">
+                        {note.note.split("\n").map((sn, i) => (
+                          <small key={`mini/sn/${i}`}>
+                            {sn}
+                            <br />
+                          </small>
+                        ))}
+                      </div>
+                      {noteInfo && (
+                        <div className="flex flex-col">
+                          <small className="font-bold text-blue-500">
+                            Info :
+                          </small>
+                          <ol className="list-disc list-outside pl-6 text-xs">
+                            <li className="text-gray-200/60">
+                              <span className="font-bold text-white/80">
+                                Created At :
+                              </span>
+                              {completeDate(note.createdAt)}
+                            </li>
+                            <li className="text-gray-200/60">
+                              <span className="font-bold text-white/80">
+                                Updated At :{" "}
+                              </span>
+                              {completeDate(note.updatedAt)}
+                            </li>
+                            <li className="text-gray-200/60">
+                              <span className="font-bold text-white/80">
+                                Status :{" "}
+                              </span>
+
+                              {note.completed ? (
+                                <span className="text-green-500">
+                                  note completed
+                                </span>
+                              ) : (
+                                <span className="text-red-500">
+                                  note incompleted
+                                </span>
+                              )}
+                            </li>
+                          </ol>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {task.noteCount > 5 && (

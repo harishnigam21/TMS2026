@@ -369,14 +369,17 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                   id={`newNote/${task.id}`}
                   value={notesValue}
                   placeholder="Add Notes..."
-                  className="w-full py-1 text-sm px-4 border border-blue-600/30 focus:border-green-600/30 focus:outline-none rounded-md"
+                  rows={1}
+                  className="w-full text-sm p-4 border border-blue-600/30 focus:border-green-600/30 focus:outline-none rounded-md flex noscrollbar"
                   onChange={(e) => setNotesValue(e.target.value)}
                   onKeyDown={(e) => {
                     if (
-                      e.key === "Enter" &&
+                      e.key == "Enter" &&
+                      !e.shiftKey &&
                       !noteCreateLoading &&
                       !noteEditLoading
                     ) {
+                      e.preventDefault();
                       handleNotesCreate(task.id);
                     }
                   }}
