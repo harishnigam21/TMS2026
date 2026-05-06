@@ -1,5 +1,6 @@
 import { Pagination } from "@/types/pagination";
 import { Note, Task } from "@/types/task";
+import { arrayMove } from "@dnd-kit/sortable";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface TaskState {
@@ -138,6 +139,19 @@ const TaskSlice = createSlice({
         };
       }
     },
+    dragNote: (
+      state,
+      action: PayloadAction<{ old: number; new: number; id: number }>,
+    ) => {
+      const index = state.tasks.findIndex(
+        (item) => item.id === action.payload.id,
+      );
+      state.tasks[index].notes = arrayMove(
+        state.tasks[index].notes,
+        action.payload.old,
+        action.payload.new,
+      );
+    },
   },
 });
 export const {
@@ -152,5 +166,6 @@ export const {
   updateNote,
   deleteNote,
   markNote,
+  dragNote,
 } = TaskSlice.actions;
 export default TaskSlice.reducer;

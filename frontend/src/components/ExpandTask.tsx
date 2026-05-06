@@ -2,6 +2,7 @@ import useApi from "@/hooks/useApi";
 import {
   addAllNote,
   addNote,
+  dragNote,
   starTask,
   updateNote,
   updateTask,
@@ -15,11 +16,20 @@ import React, { useEffect, useRef, useState } from "react";
 import { AppDispatch } from "@/redux/Store";
 import Notes from "@/components/Notes";
 import { BadgeInfo, SendHorizonal, Star, Trash } from "lucide-react";
-import { closestCenter, DndContext, DragEndEvent } from "@dnd-kit/core";
+import {
+  closestCenter,
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
 type taskCardProps = {
   task: Task;
@@ -55,9 +65,15 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
     const { active, over } = event;
     if (!over) return;
     if (active.id !== over.id && afterFilter && afterFilter?.length > 0) {
-      const oldIndex = afterFilter.findIndex((i) => i.id === active.id);
-      const newIndex = afterFilter.findIndex((i) => i.id === over.id);
-      // setItems((prev) => arrayMove(prev, oldIndex, newIndex)); //update through redux
+      const oldIndex = afterFilter.findIndex((i) => i.id == active.id);
+      const newIndex = afterFilter.findIndex((i) => i.id == over.id);
+      dispatch(
+        dragNote({
+          old: Number(oldIndex),
+          new: Number(newIndex),
+          id: Number(task.id),
+        }),
+      );
     }
   }
   const dispatch = useDispatch<AppDispatch>();
@@ -185,6 +201,7 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       });
     }
   };
+
   useEffect(() => {
     const getAllNotes = async () => {
       if (task && task.id && task.noteCount > 5) {
@@ -200,6 +217,17 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
     };
     getAllNotes();
   }, [dispatch, notesRequest]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 5,
+      },
+    }),
+  );
+
   return (
     <article className="relative max-h-full w-full sm:w-[75%] lg:w-[60%] xl:w-1/2 flex flex-col bg-black">
       <div className="flex relative flex-col h-full gap-2 border p-6 rounded-xl overflow-hidden transition-all duration-200">
@@ -272,30 +300,26 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
           <div className="flex flex-col gap-2 grow justify-end-safe overflow-y-auto overflow-x-hidden">
             <div className="text-green-500 flex flex-wrap gap-2 items-center">
               <b className="text-2xl whitespace-nowrap">Notes :</b>
-              {afterFilter && afterFilter.length > 0 ? (
-                <div className="flex items-center py-3 gap-2 flex-nowrap w-full overflow-x-auto noscrollbar basis-full">
-                  <button
-                    className={`rounded-full py-0.5 px-3 ${filterSelected == "all" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 font-semibold transition-all cursor-pointer`}
-                    onClick={() => setFilterSelected("all")}
-                  >
-                    All
-                  </button>
-                  <button
-                    className={`rounded-full py-0.5 px-3 ${filterSelected == "done" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 font-semibold transition-all cursor-pointer`}
-                    onClick={() => setFilterSelected("done")}
-                  >
-                    Done
-                  </button>
-                  <button
-                    className={`rounded-full py-0.5 px-3 ${filterSelected == "undone" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 font-semibold transition-all cursor-pointer`}
-                    onClick={() => setFilterSelected("undone")}
-                  >
-                    UnDone
-                  </button>
-                </div>
-              ) : (
-                <small className="text-red-500">No notes !</small>
-              )}
+              <div className="flex items-center py-3 gap-2 flex-nowrap w-full overflow-x-auto noscrollbar basis-full">
+                <button
+                  className={`rounded-full py-0.5 px-3 ${filterSelected == "all" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 font-semibold transition-all cursor-pointer`}
+                  onClick={() => setFilterSelected("all")}
+                >
+                  All
+                </button>
+                <button
+                  className={`rounded-full py-0.5 px-3 ${filterSelected == "done" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 font-semibold transition-all cursor-pointer`}
+                  onClick={() => setFilterSelected("done")}
+                >
+                  Done
+                </button>
+                <button
+                  className={`rounded-full py-0.5 px-3 ${filterSelected == "undone" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 font-semibold transition-all cursor-pointer`}
+                  onClick={() => setFilterSelected("undone")}
+                >
+                  UnDone
+                </button>
+              </div>
             </div>
             {afterFilter && afterFilter.length > 0 && !notesLoading ? (
               <div
@@ -303,8 +327,10 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                 className="flex flex-col overflow-x-hidden overflow-y-auto manual-scroll p-2 rounded-xl"
               >
                 <DndContext
+                  sensors={sensors}
                   collisionDetection={closestCenter}
                   onDragEnd={handleDragEnd}
+                   modifiers={[restrictToVerticalAxis]}
                 >
                   <SortableContext
                     items={afterFilter.map((i) => String(i.id))} // FIXED
@@ -322,6 +348,8 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                   </SortableContext>
                 </DndContext>
               </div>
+            ) : afterFilter && afterFilter?.length <= 0 ? (
+              <small className="text-red-500">No notes !</small>
             ) : (
               <div className="w-full flex flex-col gap-2">
                 {Array.from({ length: 3 }).map((_, i) => (

@@ -124,7 +124,7 @@ export default function Notes({
     useSortable({ id: String(note.id) });
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: "transform 1ms cubic-bezier(0.2, 0, 0, 1)",
     padding: "10px",
     marginBottom: "8px",
   };
@@ -148,6 +148,7 @@ export default function Notes({
         </small>
         <div
           className="cursor-grab"
+          style={{ touchAction: "none" }}
           {...attributes}
           {...listeners}
           onClick={(e) => e.stopPropagation()}
