@@ -62,9 +62,24 @@ const TaskSlice = createSlice({
       if (index !== -1) {
         state.tasks[index] = {
           ...state.tasks[index],
+          noteCount: state.tasks[index].noteCount + 1,
           updatedAt: action.payload.updatedAt,
           notes: [...state.tasks[index].notes, action.payload],
         };
+      }
+    },
+    addAllNote: (state, action: PayloadAction<Note[]>) => {
+      if (action.payload.length > 0) {
+        const index = state.tasks.findIndex(
+          (item) => item.id === action.payload[0].taskId,
+        );
+
+        if (index !== -1) {
+          state.tasks[index] = {
+            ...state.tasks[index],
+            notes: action.payload,
+          };
+        }
       }
     },
     updateNote: (state, action: PayloadAction<Note>) => {
@@ -95,6 +110,7 @@ const TaskSlice = createSlice({
         state.tasks[index] = {
           ...state.tasks[index],
           updatedAt: action.payload.updatedAt,
+          noteCount: state.tasks[index].noteCount - 1,
           notes: state.tasks[index].notes.filter((item) => {
             if (item.id != action.payload.id) {
               return item;
@@ -132,6 +148,7 @@ export const {
   deleteTask,
   setPagination,
   addNote,
+  addAllNote,
   updateNote,
   deleteNote,
   markNote,

@@ -55,7 +55,7 @@ export default function Login() {
 
         if (data?.data) {
           dispatch(setUser(data.data));
-          dispatch(setLoginStatus('authenticated'));
+          dispatch(setLoginStatus("authenticated"));
           localStorage.setItem("userInfo", JSON.stringify(data.data));
         }
         setTimeout(() => {
@@ -95,7 +95,7 @@ export default function Login() {
               setEmail(e.target.value);
               setErrors((prev) => ({ ...prev, email: "" }));
             }}
-            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40"
+            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40 border border-gray-500/30"
           />
           {errors["email"] && (
             <small className="text-red-500">{errors["email"]} !</small>
@@ -107,7 +107,7 @@ export default function Login() {
               setPassword(e.target.value);
               setErrors((prev) => ({ ...prev, password: "" }));
             }}
-            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40"
+            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40 border border-gray-500/30"
           />
           {errors["password"] && (
             <small className="text-red-500">{errors["password"]} !</small>

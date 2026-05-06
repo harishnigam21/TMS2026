@@ -13,6 +13,7 @@ export interface Task {
   star: boolean;
   description: string;
   notes: Note[];
+  noteCount: number;
   createdAt: string;
   updatedAt: string;
 }

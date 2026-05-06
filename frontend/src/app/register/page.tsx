@@ -98,7 +98,7 @@ export default function Register() {
               setName(e.target.value);
               setErrors((prev) => ({ ...prev, name: "" }));
             }}
-            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40"
+            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40 border border-gray-500/30"
           />
           {errors["name"] && (
             <small className="text-red-500">{errors["name"]} !</small>
@@ -109,7 +109,7 @@ export default function Register() {
               setEmail(e.target.value);
               setErrors((prev) => ({ ...prev, email: "" }));
             }}
-            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40"
+            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40 border border-gray-500/30"
           />
           {errors["email"] && (
             <small className="text-red-500">{errors["email"]} !</small>
@@ -121,7 +121,7 @@ export default function Register() {
               setPassword(e.target.value);
               setErrors((prev) => ({ ...prev, password: "" }));
             }}
-            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40"
+            className="px-4 py-3 rounded-lg bg-[#111827] text-white placeholder-white/70 outline-none focus:ring-2 focus:ring-white/40 border border-gray-500/30"
           />
           {errors["password"] && (
             <small className="text-red-500">{errors["password"]} !</small>
