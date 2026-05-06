@@ -3,11 +3,13 @@ import { deleteNote, markNote } from "@/redux/slices/TaskSlice";
 import { AppDispatch } from "@/redux/Store";
 import { Data } from "@/types/data";
 import { Note } from "@/types/task";
-import { Check, Pencil, Trash, X } from "lucide-react";
+import { Check, GripVertical, Pencil, Trash, X } from "lucide-react";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { useGesture } from "@use-gesture/react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 export default function Notes({
   index,
   note,
@@ -117,22 +119,43 @@ export default function Notes({
       }
     },
   });
+
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: String(note.id) });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    padding: "10px",
+    marginBottom: "8px",
+  };
   return (
     <div
-      className={`relative flex p-2 ${showOptions ? "bg-gray-50/10" : ""} rounded-xl`}
+      ref={setNodeRef}
+      style={style}
+      className={`relative flex p-2 ${showOptions ? "bg-gray-50/10" : ""} rounded-xl border border-gray-500/30`}
       onMouseLeave={() => setShowOptions(false)}
-      {...toggleOptions()}
     >
       <div
+        {...toggleOptions()}
         className="flex gap-2 cursor-pointer w-full"
         onClick={() => setNoteExpand((prev) => !prev)}
       >
         <small>{index + 1}.</small>
         <small
-          className={`${noteExpand ? "" : "line-clamp-1"} w-full wrap-anywhere`}
+          className={`${noteExpand ? "" : "line-clamp-1"} w-full wrap-anywhere grow`}
         >
           {note.note}.
         </small>
+        <div
+          className="cursor-grab"
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical size={20}>
+            <title>Prioritize the notes</title>
+          </GripVertical>
+        </div>
       </div>
       <div
         className={`grid grid-cols-4 place-items-center rounded-full absolute right-0 top-0.5 text-sm z-10 bg-black max-w-0 overflow-hidden ${showOptions ? "max-w-40 " : "max-w-0 p-0"} transition-all duration-500`}

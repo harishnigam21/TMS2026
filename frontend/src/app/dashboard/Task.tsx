@@ -1,24 +1,19 @@
 import useApi from "@/hooks/useApi";
-import {
-  addNote,
-  starTask,
-  updateNote,
-  updateTask,
-} from "@/redux/slices/TaskSlice";
+import { starTask, updateTask } from "@/redux/slices/TaskSlice";
 import { Data } from "@/types/data";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
-import { Note, Task } from "@/types/task";
+import { Task } from "@/types/task";
 import { completeDate, getDaysBetween } from "@/utils/getDate";
 import { useElementHeight } from "@/hooks/useElementHeight";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AppDispatch } from "@/redux/Store";
-import Notes from "@/components/Notes";
 import {
   BadgeInfo,
+  ChevronsDown,
   CornerRightDown,
   Expand,
-  SendHorizonal,
+  Info,
   Star,
   Trash,
   X,
@@ -34,25 +29,13 @@ type taskCardProps = {
 function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
   const [ref, height] = useElementHeight();
   const [expand, setExpand] = useState<boolean>(false);
+  const [noteInfo, setNoteInfo] = useState<boolean>(false);
   const [fullScreen, setFullScreen] = useState<boolean>(false);
   const [taskInfo, setTaskInfo] = useState<string | null>(null);
-  const [filterSelected, setFilterSelected] = useState<
-    "all" | "done" | "undone"
-  >("all");
   const dispatch = useDispatch<AppDispatch>();
-  const [notesValue, setNotesValue] = useState<string>("");
-  const [inputType, setInputType] = useState<{
-    type: string;
-    prevValue: string;
-    id: number | null;
-  } | null>(null);
   const { sendRequest: updateTaskRequest, loading: updateTaskLoading } =
     useApi();
-  const { sendRequest: noteCreateRequest, loading: noteCreateLoading } =
-    useApi();
-  const { sendRequest: noteEditRequest, loading: noteEditLoading } = useApi();
   const { sendRequest: starRequest, loading: starLoading } = useApi();
-
   const updateTheTask = async (id: number) => {
     if (!id) {
       toast.error("Invalid Task");
@@ -74,57 +57,6 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       }
     });
   };
-  const handleNotesCreate = async (id: number) => {
-    if (!id) {
-      toast.error("Invalid Task");
-      return;
-    }
-    if (!notesValue || notesValue.trim().length < 2) {
-      toast.error("Invalid Note");
-      return;
-    }
-    if (inputType && inputType.type && inputType.type == "noteEdit") {
-      if (inputType.prevValue.trim() == notesValue.trim()) {
-        toast.error("No Modification done");
-        return;
-      }
-      if (inputType.id) {
-        noteEditRequest(`tasks/${id}/note/${inputType.id}/edit`, "POST", {
-          note: notesValue,
-        }).then((result) => {
-          const data = result?.data as Data<Note> | undefined;
-          if (result && result.success) {
-            toast.success(data?.message || "Updated Note");
-            if (data?.data) {
-              dispatch(updateNote(data.data));
-            }
-            setNotesValue("");
-            setInputType(null);
-          } else {
-            const errMessage = data?.message || "Failed to update note";
-            toast.error(errMessage);
-          }
-        });
-      }
-      return;
-    }
-    setInputType({ type: "newNote", prevValue: notesValue, id: null });
-    noteCreateRequest(`tasks/${id}/note`, "PATCH", { note: notesValue }).then(
-      (result) => {
-        const data = result?.data as Data<Note> | undefined;
-        if (result && result.success) {
-          toast.success(data?.message || "Added new Note");
-          if (data?.data) {
-            dispatch(addNote(data.data));
-          }
-          setNotesValue("");
-        } else {
-          const errMessage = data?.message || "Failed to add note";
-          toast.error(errMessage);
-        }
-      },
-    );
-  };
   const handleTaskStar = async (task: Task) => {
     if (task) {
       starRequest(`tasks/${task.id}/star`, "PATCH").then((result) => {
@@ -144,15 +76,6 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       });
     }
   };
-  const noteScrollRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (noteScrollRef.current && inputType && inputType.type == "newNote") {
-      noteScrollRef.current.scrollTo({
-        top: noteScrollRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  }, [task.notes, inputType]);
   useEffect(() => {
     const expansion = async () => {
       if (taskInfo) {
@@ -170,7 +93,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
           size={30}
           color="red"
           strokeWidth={5}
-          className="fixed top-1 right-1 cursor-pointer"
+          className="fixed top-0 right-0 cursor-pointer z-10"
           onClick={() => setFullScreen(false)}
         >
           <title>Close Task</title>
@@ -260,86 +183,56 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
           <div className="flex flex-col gap-2 grow justify-end-safe">
             <div className="text-green-500 flex flex-wrap gap-2 items-center">
               <b className="text-sm whitespace-nowrap">Notes :</b>
-              {task.notes && task.notes.length > 0 ? (
-                <div className="flex items-center py-3 gap-2 flex-nowrap w-full overflow-x-auto noscrollbar basis-full">
-                  <button
-                    className={`rounded-full py-0.5 px-3 ${filterSelected == "all" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 text-xs font-semibold transition-all cursor-pointer`}
-                    onClick={() => setFilterSelected("all")}
-                  >
-                    All
-                  </button>
-                  <button
-                    className={`rounded-full py-0.5 px-3 ${filterSelected == "done" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 text-xs font-semibold transition-all cursor-pointer`}
-                    onClick={() => setFilterSelected("done")}
-                  >
-                    Done
-                  </button>
-                  <button
-                    className={`rounded-full py-0.5 px-3 ${filterSelected == "undone" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 text-xs font-semibold transition-all cursor-pointer`}
-                    onClick={() => setFilterSelected("undone")}
-                  >
-                    UnDone
-                  </button>
+              {task?.notes.length > 0 ? (
+                <div className="relative flex grow">
+                  <Info
+                    size={15}
+                    color="red"
+                    className="ping cursor-pointer"
+                    onClick={() => setNoteInfo((prev) => !prev)}
+                  />
+                  {noteInfo && (
+                    <ul
+                      className="absolute list-disc list-outside pl-6 border border-red-600 marker:text-red-600 top-0 left-4 w-[95%] max-h-40 p-2 text-xs bg-black text-white rounded-xl overflow-y-auto manual-scroll"
+                      onMouseLeave={() => setNoteInfo(false)}
+                    >
+                      <li>
+                        Expand Task by clicking icon at top middle of task.
+                      </li>
+                      <li>
+                        There you can edit, delete, update, mark the note.
+                      </li>
+                      <li>
+                        You can prioritize the task, just by dragging them.
+                      </li>
+                    </ul>
+                  )}
                 </div>
               ) : (
                 <small className="text-red-500">No notes !</small>
               )}
             </div>
             {task.notes && task.notes.length > 0 && (
-              <div
-                ref={noteScrollRef}
-                className="flex flex-col max-h-40 overflow-auto manual-scroll bg-gray-500/20 p-2 rounded-xl"
-              >
-                {task.notes
-                  .filter((item) => {
-                    if (filterSelected == "all") {
-                      return true;
-                    }
-                    if (filterSelected == "done") {
-                      return item.completed;
-                    }
-                    if (filterSelected == "undone") {
-                      return !item.completed;
-                    }
-                  })
-                  .map((note, index) => (
-                    <Notes
-                      key={`task/notes/${index}`}
-                      note={note}
-                      index={index}
-                      setNotesValue={setNotesValue}
-                      setInputType={setInputType}
-                    />
-                  ))}
-              </div>
-            )}
-            {!task.completed && (
-              <div className="flex gap-2 w-full items-center">
-                <input
-                  type="text"
-                  name="newNote"
-                  id={`newNote/${task.id}`}
-                  value={notesValue}
-                  placeholder="Add Notes..."
-                  className="w-full py-1 text-sm px-4 rounded-full border border-gray-600/20"
-                  onChange={(e) => setNotesValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (
-                      e.key === "Enter" &&
-                      !noteCreateLoading &&
-                      !noteEditLoading
-                    ) {
-                      handleNotesCreate(task.id);
-                    }
-                  }}
-                />
-                {noteCreateLoading || noteEditLoading ? (
-                  <span className="spinner"></span>
-                ) : (
-                  <SendHorizonal
-                    className="cursor-pointer text-blue-700 text-xl"
-                    onClick={() => handleNotesCreate(task.id)}
-                  />
+              <div className="flex flex-col gap-1 max-h-40 overflow-auto manual-scroll bg-gray-500/20 p-2 rounded-xl">
+                {task.notes.slice(0, 5).map((note, index) => (
+                  <div
+                    key={`task/notes/${index}`}
+                    className="flex gap-2 cursor-pointer w-full"
+                  >
+                    <small>{index + 1}.</small>
+                    <small className={` w-full wrap-anywhere grow`}>
+                      {note.note}.
+                    </small>
+                  </div>
+                ))}
+                {task.noteCount > 5 && (
+                  <ChevronsDown
+                    className="self-center animate-bounce cursor-pointer"
+                    color="green"
+                    onClick={() => setFullScreen(true)}
+                  >
+                    <title>More</title>
+                  </ChevronsDown>
                 )}
               </div>
             )}
@@ -373,10 +266,10 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
         </Star>
       </div>
       {/* Expand icon */}
-      <div className="absolute -top-2 self-center">
+      <div className="absolute -top-2.5 self-center">
         <Expand
           className="cursor-pointer"
-          color="white"
+          color="blue"
           size={20}
           onClick={() => setFullScreen(true)}
         >

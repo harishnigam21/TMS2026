@@ -1,5 +1,6 @@
 import useApi from "@/hooks/useApi";
 import {
+  addAllNote,
   addNote,
   starTask,
   updateNote,
@@ -14,6 +15,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { AppDispatch } from "@/redux/Store";
 import Notes from "@/components/Notes";
 import { BadgeInfo, SendHorizonal, Star, Trash } from "lucide-react";
+import { closestCenter, DndContext, DragEndEvent } from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 type taskCardProps = {
   task: Task;
@@ -26,6 +32,34 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
   const [filterSelected, setFilterSelected] = useState<
     "all" | "done" | "undone"
   >("all");
+  const [afterFilter, setAfterFilter] = useState<Note[]>();
+  useEffect(() => {
+    const filterTask = async () => {
+      setAfterFilter(
+        task.notes.filter((item) => {
+          if (filterSelected == "all") {
+            return true;
+          }
+          if (filterSelected == "done") {
+            return item.completed;
+          }
+          if (filterSelected == "undone") {
+            return !item.completed;
+          }
+        }),
+      );
+    };
+    filterTask();
+  }, [filterSelected, task.notes]);
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over) return;
+    if (active.id !== over.id && afterFilter && afterFilter?.length > 0) {
+      const oldIndex = afterFilter.findIndex((i) => i.id === active.id);
+      const newIndex = afterFilter.findIndex((i) => i.id === over.id);
+      // setItems((prev) => arrayMove(prev, oldIndex, newIndex)); //update through redux
+    }
+  }
   const dispatch = useDispatch<AppDispatch>();
   const [notesValue, setNotesValue] = useState<string>("");
   const [inputType, setInputType] = useState<{
@@ -39,6 +73,22 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
     useApi();
   const { sendRequest: noteEditRequest, loading: noteEditLoading } = useApi();
   const { sendRequest: starRequest, loading: starLoading } = useApi();
+  const { sendRequest: notesRequest, loading: notesLoading } = useApi();
+
+  const noteScrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollToDown = () => {
+    const el = noteScrollRef.current;
+    if (!el) return;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        el.scrollTo({
+          top: el.scrollHeight,
+          behavior: "smooth",
+        });
+      });
+    });
+  };
 
   const updateTheTask = async (id: number) => {
     if (!id) {
@@ -61,6 +111,7 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       }
     });
   };
+
   const handleNotesCreate = async (id: number) => {
     if (!id) {
       toast.error("Invalid Task");
@@ -95,7 +146,6 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       }
       return;
     }
-    setInputType({ type: "newNote", prevValue: notesValue, id: null });
     noteCreateRequest(`tasks/${id}/note`, "PATCH", { note: notesValue }).then(
       (result) => {
         const data = result?.data as Data<Note> | undefined;
@@ -104,7 +154,10 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
           if (data?.data) {
             dispatch(addNote(data.data));
           }
+          setFilterSelected("undone");
+          scrollToDown();
           setNotesValue("");
+          setInputType(null);
         } else {
           const errMessage = data?.message || "Failed to add note";
           toast.error(errMessage);
@@ -112,6 +165,7 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       },
     );
   };
+
   const handleTaskStar = async (task: Task) => {
     if (task) {
       starRequest(`tasks/${task.id}/star`, "PATCH").then((result) => {
@@ -131,18 +185,24 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       });
     }
   };
-  const noteScrollRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (noteScrollRef.current && inputType && inputType.type == "newNote") {
-      noteScrollRef.current.scrollTo({
-        top: noteScrollRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  }, [task.notes, inputType]);
+    const getAllNotes = async () => {
+      if (task && task.id && task.noteCount > 5) {
+        await notesRequest(`tasks/${task.id}/note`, "GET").then((result) => {
+          const data = result?.data as Data<Note[]> | undefined;
+          if (result && result.success) {
+            if (data?.data) {
+              dispatch(addAllNote(data.data));
+            }
+          }
+        });
+      }
+    };
+    getAllNotes();
+  }, [dispatch, notesRequest]);
   return (
-    <article className="relative w-full sm:w-[75%] lg:w-[60%] xl:w-1/2 flex flex-col bg-black">
-      <div className="flex relative flex-col justify-between gap-2 border p-6 rounded-xl overflow-hidden transition-all duration-200">
+    <article className="relative max-h-full w-full sm:w-[75%] lg:w-[60%] xl:w-1/2 flex flex-col bg-black">
+      <div className="flex relative flex-col h-full gap-2 border p-6 rounded-xl overflow-hidden transition-all duration-200">
         <div>
           <div
             className={` ${
@@ -209,10 +269,10 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
             </div>
           </div>
         ) : taskInfo == "more" ? (
-          <div className="flex flex-col gap-2 grow justify-end-safe">
+          <div className="flex flex-col gap-2 grow justify-end-safe overflow-y-auto overflow-x-hidden">
             <div className="text-green-500 flex flex-wrap gap-2 items-center">
               <b className="text-2xl whitespace-nowrap">Notes :</b>
-              {task.notes && task.notes.length > 0 ? (
+              {afterFilter && afterFilter.length > 0 ? (
                 <div className="flex items-center py-3 gap-2 flex-nowrap w-full overflow-x-auto noscrollbar basis-full">
                   <button
                     className={`rounded-full py-0.5 px-3 ${filterSelected == "all" ? "bg-blue-500 text-white" : "bg-white text-black"}  hover:scale-90 font-semibold transition-all cursor-pointer`}
@@ -237,42 +297,49 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                 <small className="text-red-500">No notes !</small>
               )}
             </div>
-            {task.notes && task.notes.length > 0 && (
+            {afterFilter && afterFilter.length > 0 && !notesLoading ? (
               <div
                 ref={noteScrollRef}
-                className="flex flex-col max-h-40 overflow-auto manual-scroll bg-gray-500/20 p-2 rounded-xl"
+                className="flex flex-col overflow-x-hidden overflow-y-auto manual-scroll p-2 rounded-xl"
               >
-                {task.notes
-                  .filter((item) => {
-                    if (filterSelected == "all") {
-                      return true;
-                    }
-                    if (filterSelected == "done") {
-                      return item.completed;
-                    }
-                    if (filterSelected == "undone") {
-                      return !item.completed;
-                    }
-                  })
-                  .map((note, index) => (
-                    <Notes
-                      key={`task/notes/${index}`}
-                      note={note}
-                      index={index}
-                      setNotesValue={setNotesValue}
-                      setInputType={setInputType}
-                    />
-                  ))}
+                <DndContext
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={afterFilter.map((i) => String(i.id))} // FIXED
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {afterFilter.map((note, index) => (
+                      <Notes
+                        key={`task/notes/${index}`}
+                        note={note}
+                        index={index}
+                        setNotesValue={setNotesValue}
+                        setInputType={setInputType}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+              </div>
+            ) : (
+              <div className="w-full flex flex-col gap-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={`full/task/note/skeleton/${i}`}
+                    className="w-full rounded-xl border border-gray-500/30 h-10 animate-pulse bg-gray-600/80"
+                  ></div>
+                ))}
               </div>
             )}
             {!task.completed && (
-              <div className="flex gap-2 w-full items-center">
+              <div className="flex gap-2 w-full items-center mt-4">
                 <textarea
                   name="newNote"
                   id={`newNote/${task.id}`}
                   value={notesValue}
                   placeholder="Add Notes..."
-                  className="w-full py-1 text-sm px-4 border border-gray-600/20"
+                  className="w-full py-1 text-sm px-4 border border-blue-600/30 focus:border-green-600/30 focus:outline-none rounded-md"
                   onChange={(e) => setNotesValue(e.target.value)}
                   onKeyDown={(e) => {
                     if (
@@ -288,7 +355,7 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                   <span className="spinner"></span>
                 ) : (
                   <SendHorizonal
-                  size={30}
+                    size={30}
                     className="cursor-pointer text-blue-700 text-xl"
                     onClick={() => handleNotesCreate(task.id)}
                   />
