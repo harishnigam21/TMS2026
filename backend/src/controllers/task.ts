@@ -92,13 +92,18 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
       where: filters,
       orderBy: { id: "desc" },
       include: {
-        notes: true,
+        notes: { take: 5, orderBy: { id: "asc" } },
+        _count: { select: { notes: true } },
       },
     });
-
+    let frameTask = [];
+    for (const task of tasks) {
+      const { _count, ...rest } = task;
+      frameTask.push({ ...rest, noteCount: _count.notes });
+    }
     return res.status(200).json({
       message: "Successfully got tasks",
-      data: tasks,
+      data: frameTask,
       pagination: {
         thisPage: page,
         totalPages,
@@ -201,7 +206,29 @@ export const deleteTask = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
+export const getAllNotes = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    const taskId = Number(req.params.id);
+    const getNotes = await prisma.$transaction(async (tx) => {
+      const taskExist = await tx.task.findUnique({
+        where: { id: taskId, userId },
+      });
+      if (!taskExist) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      return tx.note.findMany({
+        where: { taskId: taskExist.id },
+        orderBy: { id: "asc" },
+      });
+    });
+    console.log("Successfully got all notes of task");
+    return res.status(200).json({ data: getNotes });
+  } catch (error) {
+    console.error("Error from getAllNotes controller", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 export const addNote = async (req: AuthRequest, res: Response) => {
   try {
     const taskId = Number(req.params.id);

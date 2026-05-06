@@ -38,9 +38,6 @@ export const login = async (req: Request, res: Response) => {
   try {
     const user = await prisma.user.findUnique({
       where: { email },
-      include: {
-        tasks: true,
-      },
     });
     if (!user) {
       return res.status(400).json({ message: "You have not registered yet" });
@@ -79,7 +76,6 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        tasks: user.tasks,
       },
     });
   } catch (error) {
@@ -158,9 +154,6 @@ export const refresh = async (req: Request, res: Response) => {
       where: {
         refreshToken: refreshToken,
       },
-      include: {
-        tasks: true,
-      },
     });
     if (!user) {
       res.clearCookie("jwt", {
@@ -207,7 +200,6 @@ export const refresh = async (req: Request, res: Response) => {
             id: user.id,
             name: user.name,
             email: user.email,
-            tasks: user.tasks,
           },
         });
       },
