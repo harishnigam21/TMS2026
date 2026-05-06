@@ -43,6 +43,21 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
     "all" | "done" | "undone"
   >("all");
   const [afterFilter, setAfterFilter] = useState<Note[]>();
+  const dispatch = useDispatch<AppDispatch>();
+  const [notesValue, setNotesValue] = useState<string>("");
+  const [inputType, setInputType] = useState<{
+    type: string;
+    prevValue: string;
+    id: number | null;
+  } | null>(null);
+  const { sendRequest: updateTaskRequest, loading: updateTaskLoading } =
+    useApi();
+  const { sendRequest: noteCreateRequest, loading: noteCreateLoading } =
+    useApi();
+  const { sendRequest: noteEditRequest, loading: noteEditLoading } = useApi();
+  const { sendRequest: starRequest, loading: starLoading } = useApi();
+  const { sendRequest: notesRequest, loading: notesLoading } = useApi();
+
   useEffect(() => {
     const filterTask = async () => {
       setAfterFilter(
@@ -61,35 +76,22 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
     };
     filterTask();
   }, [filterSelected, task.notes]);
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
     if (active.id !== over.id && afterFilter && afterFilter?.length > 0) {
-      const oldIndex = afterFilter.findIndex((i) => i.id == active.id);
-      const newIndex = afterFilter.findIndex((i) => i.id == over.id);
+      const oldId = active.id;
+      const newId = over.id;
       dispatch(
         dragNote({
-          old: Number(oldIndex),
-          new: Number(newIndex),
+          old: Number(oldId),
+          new: Number(newId),
           id: Number(task.id),
         }),
       );
     }
   }
-  const dispatch = useDispatch<AppDispatch>();
-  const [notesValue, setNotesValue] = useState<string>("");
-  const [inputType, setInputType] = useState<{
-    type: string;
-    prevValue: string;
-    id: number | null;
-  } | null>(null);
-  const { sendRequest: updateTaskRequest, loading: updateTaskLoading } =
-    useApi();
-  const { sendRequest: noteCreateRequest, loading: noteCreateLoading } =
-    useApi();
-  const { sendRequest: noteEditRequest, loading: noteEditLoading } = useApi();
-  const { sendRequest: starRequest, loading: starLoading } = useApi();
-  const { sendRequest: notesRequest, loading: notesLoading } = useApi();
 
   const noteScrollRef = useRef<HTMLDivElement | null>(null);
   const scrollToDown = () => {
@@ -330,7 +332,7 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                   sensors={sensors}
                   collisionDetection={closestCenter}
                   onDragEnd={handleDragEnd}
-                   modifiers={[restrictToVerticalAxis]}
+                  modifiers={[restrictToVerticalAxis]}
                 >
                   <SortableContext
                     items={afterFilter.map((i) => String(i.id))} // FIXED

@@ -146,10 +146,16 @@ const TaskSlice = createSlice({
       const index = state.tasks.findIndex(
         (item) => item.id === action.payload.id,
       );
+      const OldIndex = state.tasks[index].notes.findIndex(
+        (item) => item.id == action.payload.old,
+      );
+      const NewIndex = state.tasks[index].notes.findIndex(
+        (item) => item.id == action.payload.new,
+      );
       state.tasks[index].notes = arrayMove(
         state.tasks[index].notes,
-        action.payload.old,
-        action.payload.new,
+        OldIndex,
+        NewIndex,
       );
     },
   },
