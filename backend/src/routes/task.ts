@@ -10,6 +10,7 @@ import {
   doneNote,
   unDoneNote,
   starTask,
+  getAllNotes,
 } from "../controllers/task";
 
 import { authenticate } from "../middlewares/auth";
@@ -21,6 +22,7 @@ router.get("/", authenticate, getTasks);
 router.patch("/:id/toggle", authenticate, updateTask);
 router.patch("/:id/star", authenticate, starTask);
 router.patch("/:id/note", authenticate, addNote);
+router.get("/:id/note", authenticate, getAllNotes);
 router.post("/:tid/note/:nid/edit", authenticate, editNote);
 router.delete("/:tid/note/:nid/delete", authenticate, deleteNote);
 router.patch("/:tid/note/:nid/mark-done", authenticate, doneNote);
