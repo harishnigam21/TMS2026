@@ -2,15 +2,18 @@ import { Pagination } from "@/types/pagination";
 import { Note, Task } from "@/types/task";
 import { arrayMove } from "@dnd-kit/sortable";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import toast from "react-hot-toast";
 
 interface TaskState {
   tasks: Task[];
   pagination: Pagination | null;
+  priorityChanges: Map<string, string>;
 }
 
 const initialState: TaskState = {
   tasks: [],
   pagination: null,
+  priorityChanges: new Map(),
 };
 
 const TaskSlice = createSlice({
@@ -76,6 +79,7 @@ const TaskSlice = createSlice({
         );
 
         if (index !== -1) {
+          state.priorityChanges.clear();
           state.tasks[index] = {
             ...state.tasks[index],
             notes: action.payload,
@@ -83,6 +87,42 @@ const TaskSlice = createSlice({
         }
       }
     },
+    clearpriorityChanges: (state, action: PayloadAction<{ id: number }>) => {
+      const changes = state.priorityChanges;
+      const taskId = action.payload.id;
+      const Tindex = state.tasks.findIndex(
+        (item) => item.id === Number(taskId),
+      );
+      if (changes.size > 0) {
+        for (const [key, value] of changes) {
+          const Nindex = state.tasks[Tindex].notes.findIndex(
+            (item) => item.id === Number(key),
+          );
+          const chc = state.tasks[Tindex].notes[Nindex];
+          if (chc.prevPriority) {
+            chc.priority = chc.prevPriority;
+            delete chc.prevPriority;
+          } else {
+            toast.error(
+              `Their is some suspicious Change at Note with Title : ${chc.note}`,
+            );
+          }
+        }
+        changes.clear();
+        state.tasks[Tindex].notes.sort((a, b) => a.priority - b.priority);
+      } else {
+        toast.error("There are no changes to make.");
+      }
+    },
+    onlyClearpriorityChange: (state) => {
+      const changes = state.priorityChanges;
+      if (changes.size > 0) {
+        changes.clear();
+      } else {
+        toast.error("There are no changes to make.");
+      }
+    },
+
     updateNote: (state, action: PayloadAction<Note>) => {
       const index = state.tasks.findIndex(
         (item) => item.id === action.payload.taskId,
@@ -152,6 +192,33 @@ const TaskSlice = createSlice({
       const NewIndex = state.tasks[index].notes.findIndex(
         (item) => item.id == action.payload.new,
       );
+      const direction =
+        state.tasks[index].notes[OldIndex].priority -
+          state.tasks[index].notes[NewIndex].priority >
+        0
+          ? "up"
+          : "down";
+      const updatedPriority =
+        direction == "up"
+          ? (state.tasks[index].notes[NewIndex].priority +
+              (state.tasks[index].notes[NewIndex - 1]
+                ? state.tasks[index].notes[NewIndex - 1].priority
+                : 0)) /
+            2
+          : (state.tasks[index].notes[NewIndex].priority +
+              (state.tasks[index].notes[NewIndex + 1]
+                ? state.tasks[index].notes[NewIndex + 1].priority
+                : 2000 + state.tasks[index].notes[NewIndex].priority)) /
+            2;
+      state.priorityChanges.set(
+        String(action.payload.old),
+        String(updatedPriority),
+      );
+      if (!state.tasks[index].notes[OldIndex].prevPriority) {
+        state.tasks[index].notes[OldIndex]["prevPriority"] =
+          state.tasks[index].notes[OldIndex].priority;
+      }
+      state.tasks[index].notes[OldIndex].priority = updatedPriority;
       state.tasks[index].notes = arrayMove(
         state.tasks[index].notes,
         OldIndex,
@@ -169,6 +236,8 @@ export const {
   setPagination,
   addNote,
   addAllNote,
+  clearpriorityChanges,
+  onlyClearpriorityChange,
   updateNote,
   deleteNote,
   markNote,

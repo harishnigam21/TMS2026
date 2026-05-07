@@ -32,7 +32,6 @@ export default function Dashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
-
   const search = searchParams.get("search") || "";
   const [searchInput, setSearchInput] = useState(search);
 

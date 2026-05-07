@@ -2,6 +2,8 @@ export interface Note {
   id: number;
   taskId: number;
   note: string;
+  priority: number;
+  prevPriority?: number;
   completed: boolean;
   createdAt: string;
   updatedAt: string;
