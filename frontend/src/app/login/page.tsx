@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import useApi from "@/hooks/useApi";
 import { useDispatch } from "react-redux";
@@ -16,6 +16,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
+  const passwordRef = useRef<HTMLInputElement | null>(null);
   const dispatch = useDispatch<AppDispatch>();
   const validate = () => {
     //  Email: Standard RFC format
@@ -68,7 +69,7 @@ export default function Login() {
         const errorMessage =
           result?.error || data?.message || "An error occurred";
         toast.error(errorMessage);
-        if (result.status === 404) {
+        if (result.status === 400) {
           setTimeout(() => {
             router.push("/register");
           }, 2000);
@@ -91,6 +92,11 @@ export default function Login() {
         <div className="flex flex-col gap-4">
           <input
             placeholder="Email"
+            onKeyDown={(e) => {
+              if (e.key == "Enter" && passwordRef.current) {
+                passwordRef.current.focus();
+              }
+            }}
             onChange={(e) => {
               setEmail(e.target.value);
               setErrors((prev) => ({ ...prev, email: "" }));
@@ -101,8 +107,14 @@ export default function Login() {
             <small className="text-red-500">{errors["email"]} !</small>
           )}
           <input
+            ref={passwordRef}
             type="password"
             placeholder="Password"
+            onKeyDown={(e) => {
+              if (e.key == "Enter") {
+                handleLogin();
+              }
+            }}
             onChange={(e) => {
               setPassword(e.target.value);
               setErrors((prev) => ({ ...prev, password: "" }));

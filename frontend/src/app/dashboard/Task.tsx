@@ -88,7 +88,6 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
   };
   const handlePrioritySave = async (id: number) => {
     if (id && priorityChanges.size > 0) {
-      console.log(priorityChanges);
       await prioritySaveRequest(`tasks/${id}/notes/priority`, "PATCH", {
         changes: JSON.stringify(Object.fromEntries(priorityChanges)),
       }).then((result) => {

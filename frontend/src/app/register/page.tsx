@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import useApi from "@/hooks/useApi";
 import toast from "react-hot-toast";
@@ -12,6 +12,8 @@ export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
   const validate = () => {
@@ -75,7 +77,7 @@ export default function Register() {
         toast.error(errorMessage);
         if (result.status === 409) {
           setTimeout(() => {
-            router.push("/register");
+            router.push("/login");
           }, 2000);
         }
       }
@@ -94,6 +96,11 @@ export default function Register() {
         <div className="flex flex-col gap-4">
           <input
             placeholder="Name"
+            onKeyDown={(e) => {
+              if (e.key == "Enter" && emailRef.current) {
+                emailRef.current.focus();
+              }
+            }}
             onChange={(e) => {
               setName(e.target.value);
               setErrors((prev) => ({ ...prev, name: "" }));
@@ -104,7 +111,13 @@ export default function Register() {
             <small className="text-red-500">{errors["name"]} !</small>
           )}
           <input
+            ref={emailRef}
             placeholder="Email"
+            onKeyDown={(e) => {
+              if (e.key == "Enter" && passwordRef.current) {
+                passwordRef.current.focus();
+              }
+            }}
             onChange={(e) => {
               setEmail(e.target.value);
               setErrors((prev) => ({ ...prev, email: "" }));
@@ -115,8 +128,14 @@ export default function Register() {
             <small className="text-red-500">{errors["email"]} !</small>
           )}
           <input
+            ref={passwordRef}
             type="password"
             placeholder="Password"
+            onKeyDown={(e) => {
+              if (e.key == "Enter") {
+                handleRegistration();
+              }
+            }}
             onChange={(e) => {
               setPassword(e.target.value);
               setErrors((prev) => ({ ...prev, password: "" }));
