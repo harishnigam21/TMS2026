@@ -35,9 +35,21 @@ type taskCardProps = {
   task: Task;
   deleteTaskLoading: boolean;
   deleteTheTask: (id: number) => void;
+  handlePriorityReset: (id: number) => void;
+  handlePrioritySave: (id: number) => void;
+  priorityChanges: Map<string, string>;
+  prioritySaveLoading: boolean;
 };
 
-function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
+function ExpandTask({
+  task,
+  deleteTheTask,
+  deleteTaskLoading,
+  priorityChanges,
+  handlePriorityReset,
+  handlePrioritySave,
+  prioritySaveLoading,
+}: taskCardProps) {
   const [taskInfo, setTaskInfo] = useState<string>("more");
   const [filterSelected, setFilterSelected] = useState<
     "all" | "done" | "undone"
@@ -322,6 +334,29 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                   UnDone
                 </button>
               </div>
+              {priorityChanges.size > 0 && (
+                <div className="flex items-center text-white flex-wrap gap-2">
+                  <p>What to do with this Priority changes ?</p>
+                  <div className="flex gap-2 flex-nowrap">
+                    <button
+                      disabled={prioritySaveLoading}
+                      title="रख लिया जाए"
+                      className="rounded-full py-0.5 px-4 font-medium border border-green-600/50 hover:scale-90 transition-all cursor-pointer flex items-center gap-2"
+                      onClick={() => handlePrioritySave(task.id)}
+                    >
+                      Save{" "}
+                      {prioritySaveLoading && <div className="spinner"></div>}
+                    </button>
+                    <button
+                      title=" छोड़ दिया जाये"
+                      className="rounded-full py-0.5 px-4 font-medium border border-red-600/50 hover:scale-90 transition-all cursor-pointer"
+                      onClick={() => handlePriorityReset(task.id)}
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
             {afterFilter && afterFilter.length > 0 && !notesLoading ? (
               <div
@@ -343,6 +378,7 @@ function ExpandTask({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
                         key={`task/notes/${index}`}
                         note={note}
                         index={index}
+                        priorityChanges={priorityChanges}
                         setNotesValue={setNotesValue}
                         setInputType={setInputType}
                       />

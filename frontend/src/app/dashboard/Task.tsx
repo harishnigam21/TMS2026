@@ -1,13 +1,18 @@
 import useApi from "@/hooks/useApi";
-import { starTask, updateTask } from "@/redux/slices/TaskSlice";
+import {
+  clearpriorityChanges,
+  onlyClearpriorityChange,
+  starTask,
+  updateTask,
+} from "@/redux/slices/TaskSlice";
 import { Data } from "@/types/data";
 import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Task } from "@/types/task";
 import { completeDate, getDaysBetween } from "@/utils/getDate";
 import { useElementHeight } from "@/hooks/useElementHeight";
 import React, { useEffect, useState } from "react";
-import { AppDispatch } from "@/redux/Store";
+import { AppDispatch, RootState } from "@/redux/Store";
 import {
   BadgeInfo,
   ChevronsDown,
@@ -33,9 +38,14 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
   const [fullScreen, setFullScreen] = useState<boolean>(false);
   const [taskInfo, setTaskInfo] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
+  const priorityChanges = useSelector(
+    (state: RootState) => state.task.priorityChanges,
+  );
   const { sendRequest: updateTaskRequest, loading: updateTaskLoading } =
     useApi();
   const { sendRequest: starRequest, loading: starLoading } = useApi();
+  const { sendRequest: prioritySaveRequest, loading: prioritySaveLoading } =
+    useApi();
   const updateTheTask = async (id: number) => {
     if (!id) {
       toast.error("Invalid Task");
@@ -76,6 +86,29 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       });
     }
   };
+  const handlePrioritySave = async (id: number) => {
+    if (id && priorityChanges.size > 0) {
+      console.log(priorityChanges);
+      await prioritySaveRequest(`tasks/${id}/notes/priority`, "PATCH", {
+        changes: JSON.stringify(Object.fromEntries(priorityChanges)),
+      }).then((result) => {
+        const data = result?.data as Data<null> | undefined;
+        if (result && result.success && data?.status) {
+          toast.success("Successfully saved changes");
+          dispatch(onlyClearpriorityChange());
+        } else {
+          const errMess =
+            data?.message || "Failed to save your changes, Please try again";
+          toast.error(errMess);
+        }
+      });
+    } else {
+      toast.error("Invalid Task or No changes made");
+    }
+  };
+  const handlePriorityReset = async (id: number) => {
+    dispatch(clearpriorityChanges({ id }));
+  };
   useEffect(() => {
     const expansion = async () => {
       if (taskInfo) {
@@ -94,7 +127,25 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
           color="red"
           strokeWidth={5}
           className="fixed top-0 right-0 cursor-pointer z-10"
-          onClick={() => setFullScreen(false)}
+          onClick={async () => {
+            if (priorityChanges.size > 0) {
+              const confirm = window.confirm(
+                "Would You like to save changed priorities ?",
+              );
+              try {
+                if (confirm) {
+                  await handlePrioritySave(task.id);
+                }
+              } catch (error) {
+                console.error("From confirming the priority changes", error);
+              } finally {
+                handlePriorityReset(task.id);
+                setFullScreen(false);
+              }
+            } else {
+              setFullScreen(false);
+            }
+          }}
         >
           <title>Close Task</title>
         </X>
@@ -102,6 +153,10 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
           task={task}
           deleteTheTask={deleteTheTask}
           deleteTaskLoading={deleteTaskLoading}
+          handlePriorityReset={handlePriorityReset}
+          handlePrioritySave={handlePrioritySave}
+          prioritySaveLoading={prioritySaveLoading}
+          priorityChanges={priorityChanges}
         />
       </article>
     );
@@ -124,7 +179,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
             <div className="min-w-fit flex gap-2 float-right">
               <CornerRightDown
                 size={20}
-                className={`text-blue-500 cursor-pointer hover:scale-150 transition-all ${expand && taskInfo == "more" ? "rotate-180 " : "rotate-y-180"}`}
+                className={`text-green-500 cursor-pointer hover:scale-150 transition-all ${expand && taskInfo == "more" ? "rotate-180 " : "rotate-y-180"}`}
                 onClick={() => {
                   setTaskInfo("more");
                 }}
@@ -321,7 +376,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       <div className="absolute -top-2.5 self-center">
         <Expand
           className="cursor-pointer"
-          color="blue"
+          color="orange"
           size={20}
           onClick={() => setFullScreen(true)}
         >

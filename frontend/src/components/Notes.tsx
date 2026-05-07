@@ -16,10 +16,12 @@ export default function Notes({
   note,
   setNotesValue,
   setInputType,
+  priorityChanges,
 }: {
   index: number;
   note: Note;
   setNotesValue: React.Dispatch<React.SetStateAction<string>>;
+  priorityChanges: Map<string, string>;
   setInputType: React.Dispatch<
     React.SetStateAction<{
       type: string;
@@ -134,7 +136,7 @@ export default function Notes({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative flex p-2 ${showOptions ? "bg-gray-50/10" : ""} rounded-xl border border-gray-500/30`}
+      className={`relative flex p-2 ${showOptions ? "bg-gray-50/10" : ""} rounded-xl border ${priorityChanges.has(String(note.id)) ? "border-green-500" : "border-gray-500/30"} `}
       onMouseLeave={() => {
         setNoteInfo(false);
         setShowOptions(false);
