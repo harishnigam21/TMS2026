@@ -13,9 +13,7 @@ model User {
   email        String @unique
   password     String
   refreshToken String @default("new") @db.VarChar(256)
-
   tasks        Task[]
-
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -38,9 +36,11 @@ model Note {
   id        Int     @id @default(autoincrement())
   note      String  @db.Text
   completed Boolean @default(false)
+  priority  Float    
   taskId    Int
   task      Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([taskId])
+  @@index([id,priority])
 }

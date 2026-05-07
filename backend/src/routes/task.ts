@@ -11,6 +11,7 @@ import {
   unDoneNote,
   starTask,
   getAllNotes,
+  updateNotePriority,
 } from "../controllers/task";
 
 import { authenticate } from "../middlewares/auth";
@@ -27,6 +28,7 @@ router.post("/:tid/note/:nid/edit", authenticate, editNote);
 router.delete("/:tid/note/:nid/delete", authenticate, deleteNote);
 router.patch("/:tid/note/:nid/mark-done", authenticate, doneNote);
 router.patch("/:tid/note/:nid/mark-undone", authenticate, unDoneNote);
+router.patch("/:id/notes/priority", authenticate, updateNotePriority);
 router.delete("/:id", authenticate, deleteTask);
 
 export default router;

@@ -134,7 +134,9 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
       const task = await tx.task.findUnique({
         where: { id, userId: req.userId },
       });
-
+      if (!task) {
+        throw new Error("Task not found");
+      }
       return tx.task.update({
         where: { id, userId: req.userId },
         data: {
@@ -148,6 +150,9 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error("Error from updateTask controller", error);
+    if (error == "Task not found") {
+      return res.status(404).json({ message: "Task not found" });
+    }
     const prismaError = handlePrismaError(error, "Task");
     if (prismaError) {
       return res.status(prismaError.status).json({
@@ -165,7 +170,9 @@ export const starTask = async (req: AuthRequest, res: Response) => {
       const task = await tx.task.findUnique({
         where: { id, userId: req.userId },
       });
-
+      if (!task) {
+        throw new Error("Task not found");
+      }
       return tx.task.update({
         where: { id, userId: req.userId },
         data: {
@@ -179,6 +186,9 @@ export const starTask = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error("Error from starTask controller", error);
+    if (error == "Task not found") {
+      return res.status(404).json({ message: "Task not found" });
+    }
     const prismaError = handlePrismaError(error, "Task");
     if (prismaError) {
       return res.status(prismaError.status).json({
@@ -215,17 +225,20 @@ export const getAllNotes = async (req: AuthRequest, res: Response) => {
         where: { id: taskId, userId },
       });
       if (!taskExist) {
-        return res.status(404).json({ message: "Task not found" });
+        throw new Error("Task not found");
       }
       return tx.note.findMany({
         where: { taskId: taskExist.id },
-        orderBy: { id: "asc" },
+        orderBy: { priority: "asc" },
       });
     });
     console.log("Successfully got all notes of task");
     return res.status(200).json({ data: getNotes });
   } catch (error) {
     console.error("Error from getAllNotes controller", error);
+    if (error == "Task not found") {
+      return res.status(404).json({ message: "Task not found" });
+    }
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -240,6 +253,10 @@ export const addNote = async (req: AuthRequest, res: Response) => {
     }
 
     const newNote = await prisma.$transaction(async (tx) => {
+      const lastNote = await tx.note.findFirst({
+        where: { taskId },
+        orderBy: { priority: "desc" },
+      });
       const task = await tx.task.findUnique({
         where: { id: taskId, userId: req.userId },
       });
@@ -250,6 +267,7 @@ export const addNote = async (req: AuthRequest, res: Response) => {
 
       const note = tx.note.create({
         data: {
+          priority: lastNote ? lastNote.priority + 1000 : 1000,
           note: cleanNote,
           taskId: taskId,
         },
@@ -267,6 +285,9 @@ export const addNote = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error("Error from addNote controller", error);
+    if (error == "Task not found") {
+      return res.status(404).json({ message: "Task not found" });
+    }
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -442,5 +463,51 @@ export const unDoneNote = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: "Note not found" });
     }
     return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+export const updateNotePriority = async (req: AuthRequest, res: Response) => {
+  const { changes } = req.body || {};
+  const taskId = Number(req.params.id);
+  const parseChanges = JSON.parse(changes);
+  if (!parseChanges || Object.keys(parseChanges).length <= 0) {
+    return res
+      .status(400)
+      .json({ message: "Looks Like there are no changes", status: false });
+  }
+  try {
+    const task = await prisma.task.findUnique({
+      where: { id: taskId, userId: req.userId },
+    });
+    if (!task) {
+      throw new Error("Task not found");
+    }
+    const updates = await prisma.$transaction(async (tx) => {
+      return await Promise.all(
+        Object.entries(parseChanges).map(([id, priority]) => {
+          console.log(id, priority);
+          return tx.note.update({
+            where: { id: Number(id) },
+            data: { priority: parseFloat(priority as string) },
+          });
+        }),
+      );
+    });
+    if (!updates || updates.length != Object.keys(parseChanges).length) {
+      return res.status(400).json({
+        message: "Something wrong while updating changes",
+        status: false,
+      });
+    }
+    return res
+      .status(200)
+      .json({ message: "Successfully saved changes", status: true });
+  } catch (error: any) {
+    console.error("Error from updateNotePriority controller", error);
+    if (error == "Task not found") {
+      return res.status(404).json({ message: "Task not found" });
+    }
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", status: false });
   }
 };
