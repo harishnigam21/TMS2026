@@ -1,11 +1,5 @@
-import { Suspense } from "react";
-import DashboardClient from "./client";
-import DashboardSkeleton from "./skeleton";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return (
-    <Suspense fallback={<DashboardSkeleton />}>
-      <DashboardClient />
-    </Suspense>
-  );
+export default function DashboardPage() {
+   redirect("/dashboard/home");
 }

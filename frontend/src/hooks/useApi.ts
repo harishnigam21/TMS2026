@@ -7,12 +7,20 @@ import toast from "react-hot-toast";
 import { setLoginStatus, setUser } from "@/redux/slices/UserSlice";
 import { AppDispatch } from "@/redux/Store";
 
-type ApiResponse<T> = {
+export type ApiResponse<T> = {
   success: boolean;
   data: T | null;
   status: number;
   error?: string;
 };
+export type RequestFn<T = unknown> = (
+  url: string,
+  method?: string,
+  body?: unknown,
+  customHeaders?: Record<string, string>,
+  redirect?: boolean,
+  retry?: boolean,
+) => Promise<ApiResponse<T>>;
 
 const useApi = <T = unknown>() => {
   const [data, setData] = useState<T | null>(null);
@@ -103,6 +111,7 @@ const useApi = <T = unknown>() => {
               false,
             );
           } catch (err) {
+            console.error(err);
             localStorage.removeItem("acTk");
             dispatch(setLoginStatus("unauthenticated"));
             router.replace("/login");

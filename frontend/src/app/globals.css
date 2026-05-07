@@ -25,6 +25,16 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@layer utilities {
+  .text-outline {
+    -webkit-text-stroke: 0.4px black;
+  }
+  .text-outline-white {
+    -webkit-text-stroke: 0.4px white;
+  }
+}
+
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

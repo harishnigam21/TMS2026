@@ -164,7 +164,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
     <article className="relative flex flex-col">
       <div
         style={{ maxHeight: `${expand ? 500 : height + 24}px` }}
-        className="flex relative flex-col justify-between gap-2 border p-3 rounded-xl overflow-hidden transition-all duration-200"
+        className="flex relative flex-col justify-between gap-2 border border-amber-900/30 p-3 rounded-xl overflow-hidden transition-all duration-200"
         onMouseLeave={() => {
           setTaskInfo(null);
         }}
@@ -202,7 +202,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       ${task.completed ? "bg-green-500" : "bg-gray-500"}`}
               >
                 <div
-                  className={`bg-white w-3 h-3 rounded-full shadow-md transform transition ${task.completed ? "translate-x-4" : "translate-x-0"}`}
+                  className={`bg-amber-900 w-3 h-3 rounded-full shadow-md transform transition ${task.completed ? "translate-x-4" : "translate-x-0"}`}
                 ></div>
               </button>
             </div>
@@ -361,8 +361,7 @@ function TaskCard({ task, deleteTheTask, deleteTaskLoading }: taskCardProps) {
       {/* Star icon */}
       <div className="sticky flex justify-end-safe -mt-3.25 -mr-2 ">
         <Star
-          className={`cursor-pointer transition-all ${starLoading ? "animate-spin" : "animate-none"}`}
-          color="white"
+          className={`cursor-pointer transition-all ${starLoading ? "animate-spin" : "animate-none"} text-amber-900/30`}
           size={20}
           strokeWidth={1.5}
           fill={task.star ? "yellow" : "black"}
