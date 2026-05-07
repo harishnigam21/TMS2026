@@ -484,7 +484,6 @@ export const updateNotePriority = async (req: AuthRequest, res: Response) => {
     const updates = await prisma.$transaction(async (tx) => {
       return await Promise.all(
         Object.entries(parseChanges).map(([id, priority]) => {
-          console.log(id, priority);
           return tx.note.update({
             where: { id: Number(id) },
             data: { priority: parseFloat(priority as string) },
